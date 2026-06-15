@@ -1,26 +1,286 @@
 @import "tailwindcss";
 
+/* ============================================================
+   GARDEN CARS — Design tokens (Tailwind v4)
+   Racing green · deep black · off-white · tricolore accents
+   ============================================================ */
+
+@theme {
+  /* Brand */
+  --color-racing: #1b5e2b;
+  --color-racing-bright: #2e8b43;
+  --color-racing-deep: #103d1c;
+  --color-ink: #0a0a0a;
+  --color-ink-soft: #0e120f;
+  --color-ink-elev: #14181500;
+  --color-paper: #f5f4f0;
+  --color-paper-dim: #e7e5dd;
+
+  /* Tricolore (used sparingly, as a line) */
+  --color-it-green: #008c45;
+  --color-it-white: #ffffff;
+  --color-it-red: #cd212a;
+
+  /* Neutrals */
+  --color-fog: #9aa39c;
+  --color-graphite: #1c211d;
+
+  /* Fonts */
+  --font-display: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
+  --font-sans: var(--font-manrope), "Manrope", system-ui, sans-serif;
+
+  /* Easing */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
+}
+
+/* ------------------------------------------------------------ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #0a0a0a;
+  --fg: #f5f4f0;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  border-color: color-mix(in oklab, var(--color-paper) 12%, transparent);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: auto; /* Lenis handles smooth scroll */
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv01";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+::selection {
+  background: var(--color-racing-bright);
+  color: #fff;
+}
+
+/* Focus visibility (a11y) */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-racing-bright);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-graphite);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-racing);
+}
+
+/* ------------------------------------------------------------
+   Typography helpers
+   ------------------------------------------------------------ */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.display-hero {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  font-size: clamp(2.75rem, 9vw, 9.5rem);
+}
+
+.display-xl {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  font-size: clamp(2.25rem, 5.5vw, 5rem);
+}
+
+.display-lg {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  font-size: clamp(1.75rem, 3.5vw, 3rem);
+}
+
+.eyebrow {
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  font-size: 0.72rem;
+}
+
+/* ------------------------------------------------------------
+   Layout
+   ------------------------------------------------------------ */
+.wrap {
+  width: 100%;
+  max-width: 88rem;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 4rem);
+}
+
+.wrap-tight {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 4rem);
+}
+
+/* ------------------------------------------------------------
+   Signature: tricolore racing line
+   ------------------------------------------------------------ */
+.tricolore-line {
+  background: linear-gradient(
+    90deg,
+    var(--color-it-green) 0 33.33%,
+    var(--color-it-white) 33.33% 66.66%,
+    var(--color-it-red) 66.66% 100%
+  );
+}
+
+.tricolore-edge {
+  position: relative;
+}
+.tricolore-edge::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-it-green) 0 33.33%,
+    var(--color-it-white) 33.33% 66.66%,
+    var(--color-it-red) 66.66% 100%
+  );
+}
+
+/* Subtle film grain / vignette for cinematic dark sections */
+.cine-vignette {
+  position: relative;
+}
+.cine-vignette::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 90% at 50% 0%,
+    transparent 40%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+
+/* Racing-green ambient glow */
+.glow-racing {
+  background: radial-gradient(
+    60% 50% at 50% 50%,
+    color-mix(in oklab, var(--color-racing-bright) 55%, transparent) 0%,
+    transparent 70%
+  );
+}
+
+/* ------------------------------------------------------------
+   Buttons (in @layer components so Tailwind utilities can override,
+   e.g. `hidden` to toggle the CTA on mobile)
+   ------------------------------------------------------------ */
+@layer components {
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
+  padding: 0.95rem 1.6rem;
+  border-radius: 999px;
+  transition:
+    transform 0.4s var(--ease-out-expo),
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease;
+  will-change: transform;
+}
+.btn:hover {
+  transform: translateY(-2px);
+}
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-primary {
+  background: var(--color-racing);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--color-racing-bright);
+}
+
+.btn-ghost {
+  border: 1px solid color-mix(in oklab, var(--color-paper) 30%, transparent);
+  color: var(--color-paper);
+}
+.btn-ghost:hover {
+  border-color: var(--color-racing-bright);
+  background: color-mix(in oklab, var(--color-racing) 18%, transparent);
+}
+
+.btn-dark {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+.btn-dark:hover {
+  background: var(--color-graphite);
+}
+
+/* ------------------------------------------------------------
+   Cards
+   ------------------------------------------------------------ */
+.card-edge {
+  border: 1px solid color-mix(in oklab, var(--color-paper) 12%, transparent);
+  background: color-mix(in oklab, var(--color-ink-soft) 88%, #fff 1%);
+}
+}
+
+/* Reduced motion: kill transforms/animations */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
