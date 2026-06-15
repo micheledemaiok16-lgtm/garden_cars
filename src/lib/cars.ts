@@ -1,7 +1,10 @@
 /**
  * Catalogo auto — struttura dati riutilizzabile e separata dalla UI.
  * Facile da collegare a un CMS / gestionale in futuro.
- * Le immagini sono placeholder credibili: [DA COMPLETARE] con foto reali.
+ *
+ * FOTO: ogni auto punta a /cars/<id>.jpg (cartella public/cars/).
+ * Trascina lì la foto con il nome corretto (vedi public/cars/LEGGIMI.txt).
+ * Finché il file non esiste, la card mostra un placeholder "Foto in arrivo".
  */
 
 export type Fuel = "Benzina" | "Diesel" | "Ibrida" | "Elettrica" | "GPL";
@@ -38,7 +41,7 @@ export const cars: Car[] = [
     gearbox: "Automatico",
     power: 280,
     condition: "nuova",
-    image: "/generated/hero.webp",
+    image: "/cars/n1.jpg",
     highlight: "Pronta consegna",
   },
   {
@@ -53,7 +56,7 @@ export const cars: Car[] = [
     gearbox: "Automatico",
     power: 258,
     condition: "nuova",
-    image: "/generated/abitacolo.webp",
+    image: "/cars/n2.jpg",
     highlight: "Mild-hybrid",
   },
   {
@@ -68,7 +71,7 @@ export const cars: Car[] = [
     gearbox: "Automatico",
     power: 204,
     condition: "nuova",
-    image: "/generated/pelle-sedile.webp",
+    image: "/cars/n3.jpg",
     highlight: "Quattro",
   },
   {
@@ -83,7 +86,7 @@ export const cars: Car[] = [
     gearbox: "Automatico",
     power: 340,
     condition: "nuova",
-    image: "/generated/lucidatura-macro.webp",
+    image: "/cars/n4.jpg",
     highlight: "Zero emissioni",
   },
 
@@ -100,7 +103,7 @@ export const cars: Car[] = [
     gearbox: "Automatico",
     power: 462,
     condition: "usata",
-    image: "/generated/hero.webp",
+    image: "/cars/u1.jpg",
     highlight: "Tagliandi Porsche",
   },
   {
@@ -115,7 +118,7 @@ export const cars: Car[] = [
     gearbox: "Automatico",
     power: 194,
     condition: "usata",
-    image: "/generated/abitacolo.webp",
+    image: "/cars/u2.jpg",
     highlight: "Interni pelle cognac",
   },
   {
@@ -130,7 +133,7 @@ export const cars: Car[] = [
     gearbox: "Manuale",
     power: 150,
     condition: "usata",
-    image: "/generated/pelle-sedile.webp",
+    image: "/cars/u3.jpg",
     highlight: "Unico proprietario",
   },
   {
@@ -145,7 +148,7 @@ export const cars: Car[] = [
     gearbox: "Manuale",
     power: 245,
     condition: "usata",
-    image: "/generated/lucidatura-macro.webp",
+    image: "/cars/u4.jpg",
     highlight: "Come nuova",
   },
   {
@@ -160,7 +163,7 @@ export const cars: Car[] = [
     gearbox: "Automatico",
     power: 190,
     condition: "usata",
-    image: "/generated/pelle-campionario.webp",
+    image: "/cars/u5.jpg",
     highlight: "4x4",
   },
   {
@@ -175,7 +178,7 @@ export const cars: Car[] = [
     gearbox: "Manuale",
     power: 70,
     condition: "usata",
-    image: "/generated/hero.webp",
+    image: "/cars/u6.jpg",
     highlight: "Cittadina ideale",
   },
 ];

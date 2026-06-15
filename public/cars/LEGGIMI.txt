@@ -1,0 +1,30 @@
+FOTO DELLE AUTO — Garden Cars
+=================================
+
+Trascina qui dentro le foto delle auto, in formato .jpg, con ESATTAMENTE
+questi nomi. Appena il file è presente, sostituisce il placeholder
+"Foto in arrivo" nella card corrispondente.
+
+Consigli foto:
+- formato orizzontale (es. 16:10), buona luce, auto centrata
+- nome file tutto minuscolo, estensione .jpg
+
+AUTO NUOVE
+----------
+n1.jpg  ->  Alfa Romeo Giulia Veloce Q4
+n2.jpg  ->  Mercedes-Benz Classe C AMG Line
+n3.jpg  ->  Audi A5 Sportback S line
+n4.jpg  ->  BMW Serie 4 M Sport
+
+AUTO USATE
+----------
+u1.jpg  ->  Porsche Panamera 4 E-Hybrid
+u2.jpg  ->  Mercedes-Benz Classe E SW Premium
+u3.jpg  ->  Audi A4 Avant Business
+u4.jpg  ->  Volkswagen Golf GTI
+u5.jpg  ->  BMW X3 xDrive20d
+u6.jpg  ->  Fiat 500 Hybrid
+
+Dopo aver aggiunto le foto: git add, commit e push -> Vercel ridistribuisce
+in automatico. Per aggiungere/modificare le auto, vedi src/lib/cars.ts
+(i dati sono separati dalla grafica).

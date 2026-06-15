@@ -1,12 +1,14 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { Car } from "@/lib/cars";
 import { formatPrice } from "@/lib/utils";
 
 export function CarCard({ car }: { car: Car }) {
   const reduce = useReducedMotion();
+  const [imgError, setImgError] = useState(false);
 
   return (
     <motion.article
@@ -15,13 +17,26 @@ export function CarCard({ car }: { car: Car }) {
       className="card-edge group relative flex flex-col overflow-hidden rounded-2xl"
     >
       <div className="relative aspect-[16/10] overflow-hidden">
-        <Image
-          src={car.image}
-          alt={`${car.brand} ${car.model} ${car.trim ?? ""}`}
-          fill
-          sizes="(max-width: 768px) 100vw, 33vw"
-          className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
-        />
+        {imgError ? (
+          // Placeholder finché non viene caricata la foto reale in public/cars/
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-graphite/60">
+            <span className="relative h-12 w-12 overflow-hidden rounded-full opacity-80 ring-1 ring-white/15">
+              <Image src="/brand/logo.jpg" alt="" fill sizes="48px" className="object-cover" />
+            </span>
+            <span className="font-display text-xs uppercase tracking-wider text-paper/45">
+              Foto in arrivo
+            </span>
+          </div>
+        ) : (
+          <Image
+            src={car.image}
+            alt={`${car.brand} ${car.model} ${car.trim ?? ""}`}
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            onError={() => setImgError(true)}
+            className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/10 to-transparent" />
         {car.highlight && (
           <span className="absolute left-4 top-4 rounded-full bg-racing/90 px-3 py-1 font-display text-xs font-semibold backdrop-blur-sm">
