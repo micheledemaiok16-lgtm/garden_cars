@@ -65,8 +65,8 @@ export default function Intro() {
             <div className="relative aspect-[4/5] overflow-hidden rounded-3xl">
               <motion.div style={reduce ? undefined : { y: imgY }} className="absolute inset-0 scale-110" ref={ref}>
                 <Image
-                  src="/generated/abitacolo.webp"
-                  alt="Interni in pelle cognac di un'auto curata da Garden Cars"
+                  src="/generated/officina.png"
+                  alt="Un addetto Garden Cars cura un'auto nello showroom di Giffoni Valle Piana"
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover"
