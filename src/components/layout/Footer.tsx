@@ -67,9 +67,10 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="wrap flex flex-col items-center justify-between gap-3 py-6 text-sm text-paper/50 sm:flex-row">
           <p>
-            © {new Date().getFullYear()} Garden Cars · {site.vat}
+            © {new Date().getFullYear()} Garden Cars
+            {site.vat ? ` · ${site.vat}` : ""}
           </p>
-          <p>Realizzato con passione. Foto e listino [DA COMPLETARE].</p>
+          <p>Tutti i diritti riservati.</p>
         </div>
       </div>
     </footer>

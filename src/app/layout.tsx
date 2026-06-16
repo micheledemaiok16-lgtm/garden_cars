@@ -79,7 +79,6 @@ const jsonLd = {
   telephone: site.phone,
   address: {
     "@type": "PostalAddress",
-    streetAddress: "Via [DA COMPLETARE]",
     addressLocality: site.city,
     addressRegion: site.province,
     postalCode: "84095",

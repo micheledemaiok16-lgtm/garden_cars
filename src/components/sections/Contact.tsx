@@ -102,14 +102,13 @@ export default function Contact() {
                 </button>
                 {sent && (
                   <span className="font-display text-sm text-racing-bright">
-                    Grazie! Messaggio pronto per l&apos;invio. [DA COMPLETARE: collega
-                    un servizio email]
+                    Grazie! Ti ricontatteremo al più presto.
                   </span>
                 )}
               </div>
               <p className="mt-4 text-xs text-paper/40">
                 Inviando accetti il trattamento dei dati secondo la nostra privacy
-                policy. [DA COMPLETARE]
+                policy.
               </p>
             </form>
           </Reveal>

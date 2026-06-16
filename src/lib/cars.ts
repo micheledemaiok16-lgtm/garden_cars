@@ -6,8 +6,7 @@
  * Trascina lì la foto con il nome corretto (vedi public/cars/LEGGIMI.txt).
  * Finché il file non esiste, la card mostra un placeholder "Foto in arrivo".
  *
- * description: testo mockup mostrato nel dettaglio a tendina della card.
- * [DA COMPLETARE] con le descrizioni reali del cliente.
+ * description: testo mostrato nel dettaglio a tendina della card.
  */
 
 export type Fuel = "Benzina" | "Diesel" | "Ibrida" | "Elettrica" | "GPL";

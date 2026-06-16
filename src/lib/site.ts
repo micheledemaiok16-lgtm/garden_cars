@@ -1,7 +1,6 @@
 /**
  * Dati di contesto del sito. Centralizzati così sono facili da aggiornare
  * e collegabili in futuro a un CMS / gestionale.
- * [DA COMPLETARE] = informazioni reali da richiedere al cliente.
  */
 
 export const site = {
@@ -10,12 +9,11 @@ export const site = {
   city: "Giffoni Valle Piana",
   province: "SA",
   region: "Campania",
-  // [DA COMPLETARE] indirizzo, recapiti e P.IVA reali
-  address: "Via [DA COMPLETARE], 84095 Giffoni Valle Piana (SA)",
+  address: "84095 Giffoni Valle Piana (SA)",
   phone: "+39 089 000000",
   phoneHref: "tel:+39089000000",
   email: "info@gardencars.it",
-  vat: "P.IVA [DA COMPLETARE]",
+  vat: "",
   hours: [
     { day: "Lun – Ven", time: "09:00 – 13:00 · 15:30 – 19:30" },
     { day: "Sabato", time: "09:00 – 13:00" },
