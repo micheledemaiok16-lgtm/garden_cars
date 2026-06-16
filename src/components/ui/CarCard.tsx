@@ -2,19 +2,20 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { Car } from "@/lib/cars";
 import { formatPrice } from "@/lib/utils";
 
 export function CarCard({ car }: { car: Car }) {
   const reduce = useReducedMotion();
   const [imgError, setImgError] = useState(false);
+  const [open, setOpen] = useState(false);
 
   return (
     <motion.article
-      whileHover={reduce ? undefined : { y: -8 }}
+      whileHover={reduce || open ? undefined : { y: -8 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="card-edge group relative flex flex-col overflow-hidden rounded-2xl"
+      className="card-edge group relative flex flex-col overflow-hidden rounded-2xl text-paper"
     >
       <div className="relative aspect-[16/10] overflow-hidden">
         {imgError ? (
@@ -39,7 +40,7 @@ export function CarCard({ car }: { car: Car }) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/10 to-transparent" />
         {car.highlight && (
-          <span className="absolute left-4 top-4 rounded-full bg-racing/90 px-3 py-1 font-display text-xs font-semibold backdrop-blur-sm">
+          <span className="absolute left-4 top-4 rounded-full bg-racing/90 px-3 py-1 font-display text-xs font-semibold text-white backdrop-blur-sm">
             {car.highlight}
           </span>
         )}
@@ -49,11 +50,9 @@ export function CarCard({ car }: { car: Car }) {
       </div>
 
       <div className="flex flex-1 flex-col p-5">
-        <div className="flex items-baseline justify-between gap-3">
-          <h3 className="font-display text-lg font-semibold leading-tight">
-            {car.brand} {car.model}
-          </h3>
-        </div>
+        <h3 className="font-display text-lg font-semibold leading-tight text-paper">
+          {car.brand} {car.model}
+        </h3>
         {car.trim && <p className="mt-0.5 text-sm text-fog">{car.trim}</p>}
 
         <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-white/10 pt-4 text-center">
@@ -69,13 +68,55 @@ export function CarCard({ car }: { car: Car }) {
               {formatPrice(car.price)}
             </p>
           </div>
-          <a
-            href="#contatti"
-            className="font-display text-sm font-semibold text-paper/70 transition-colors hover:text-paper"
+          <button
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            className="flex items-center gap-1.5 font-display text-sm font-semibold text-paper/70 transition-colors hover:text-paper"
           >
-            Dettagli →
-          </a>
+            Dettagli
+            <span
+              className={`inline-block transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+              aria-hidden
+            >
+              ▾
+            </span>
+          </button>
         </div>
+
+        {/* Dettaglio a tendina */}
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="mt-5 border-t border-white/10 pt-4">
+                {car.description && (
+                  <p className="text-sm leading-relaxed text-paper/70">
+                    {car.description}
+                  </p>
+                )}
+
+                <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  {car.color && <DetailRow label="Colore" value={car.color} />}
+                  <DetailRow label="Anno" value={String(car.year)} />
+                  <DetailRow label="Cambio" value={car.gearbox} />
+                  <DetailRow
+                    label="Garanzia"
+                    value={car.condition === "nuova" ? "24 mesi" : "12 mesi"}
+                  />
+                </dl>
+
+                <a href="#contatti" className="btn btn-primary mt-5 w-full justify-center">
+                  Richiedi informazioni
+                </a>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.article>
   );
@@ -86,6 +127,15 @@ function Spec({ label, value }: { label: string; value: string }) {
     <div>
       <dd className="font-display text-sm font-semibold leading-tight">{value}</dd>
       <dt className="mt-0.5 text-[0.65rem] uppercase tracking-wider text-fog">{label}</dt>
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-2 border-b border-white/5 pb-1.5">
+      <dt className="text-xs uppercase tracking-wider text-fog">{label}</dt>
+      <dd className="font-display text-sm font-medium text-paper">{value}</dd>
     </div>
   );
 }
