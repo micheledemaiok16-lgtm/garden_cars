@@ -5,15 +5,24 @@
 
 export const site = {
   name: "Garden Cars",
+  legalName: "GARDEN'S CARS S.r.l.s.",
   tagline: "Passione su quattro ruote",
   city: "Giffoni Valle Piana",
   province: "SA",
   region: "Campania",
-  address: "84095 Giffoni Valle Piana (SA)",
-  phone: "+39 089 000000",
-  phoneHref: "tel:+39089000000",
-  email: "info@gardencars.it",
-  vat: "",
+  address: "Via Valentino Fortunato snc, 84095 Giffoni Valle Piana (SA)",
+  // Recapiti dal biglietto da visita.
+  phones: [
+    { label: "Ottavio", number: "+39 338 777 1436", href: "tel:+393387771436" },
+    { label: "Garden's Cars", number: "+39 353 369 9837", href: "tel:+393533699837" },
+  ],
+  // Recapito principale (compatibilità con i componenti esistenti).
+  phone: "+39 338 777 1436",
+  phoneHref: "tel:+393387771436",
+  email: "gardenscarsgiffoni@gmail.com",
+  vat: "P.IVA 05726810657",
+  // Prenotazione consulenza: per ora rimanda ai contatti, in futuro link Calendly.
+  consultHref: "#contatti",
   hours: [
     { day: "Lun – Ven", time: "09:00 – 13:00 · 15:30 – 19:30" },
     { day: "Sabato", time: "09:00 – 13:00" },
@@ -30,10 +39,31 @@ export const site = {
   mapLink: "https://www.openstreetmap.org/?mlat=40.7056&mlon=14.945#map=14/40.7056/14.945",
 } as const;
 
-export const nav = [
-  { label: "Nuove", href: "#nuove" },
-  { label: "Usate", href: "#usate" },
-  { label: "Trattamento Pelli", href: "#pelli" },
-  { label: "Showroom", href: "#showroom" },
+export type NavLink = { label: string; href: string };
+export type NavMenu = { label: string; children: readonly NavLink[] };
+export type NavItem = NavLink | NavMenu;
+
+export const nav: readonly NavItem[] = [
+  { label: "Auto", href: "#auto" },
+  {
+    label: "Trattamenti",
+    children: [
+      // Le sezioni dedicate ai singoli trattamenti non esistono ancora:
+      // per ora puntano all'area trattamenti (#pelli). Ricollegare quando
+      // verranno create le sezioni specifiche.
+      { label: "Lucidatura", href: "#pelli" },
+      { label: "Trattamento pelle", href: "#pelli" },
+      { label: "Car detailing", href: "#pelli" },
+      { label: "Trattamento vetri", href: "#pelli" },
+      { label: "Centraline", href: "#pelli" },
+    ],
+  },
+  // Sezione "Chi siamo" in arrivo (foto da inserire): per ora rimanda allo showroom.
+  { label: "Chi siamo", href: "#showroom" },
   { label: "Contatti", href: "#contatti" },
-] as const;
+];
+
+// Type guard per distinguere una voce con sottomenu da un link semplice.
+export function isMenu(item: NavItem): item is NavMenu {
+  return "children" in item;
+}

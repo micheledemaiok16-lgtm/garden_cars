@@ -113,8 +113,8 @@ export default function Hero() {
             <span className="relative h-44 w-44 overflow-hidden rounded-full ring-2 ring-racing-bright/50 xl:h-56 xl:w-56">
               <Image src="/brand/logo.jpg" alt="Garden Cars" fill sizes="224px" className="object-cover" />
             </span>
-            <span className="font-display text-2xl font-semibold xl:text-3xl">
-              Garden<span className="text-racing-bright">Cars</span>
+            <span className="font-logo -skew-x-6 text-2xl font-normal text-paper xl:text-3xl">
+              GARDEN&apos;S <span className="text-racing-bright">CARS</span>
             </span>
             <span className="tricolore-line h-[3px] w-20 rounded-full" />
           </motion.div>
@@ -153,12 +153,13 @@ export default function Hero() {
             variants={fadeUp}
             className="mt-7 max-w-xl text-lg leading-relaxed text-paper/80"
           >
-            Auto nuove e usate selezionate, e un trattamento pelli e sedili che
-            riporta ogni abitacolo allo splendore originale. Benvenuto in Garden Cars.
+            Auto nuove e usate selezionate e trattamenti professionali — dalla pelle
+            al detailing — per riportare ogni vettura al suo splendore. Benvenuto in
+            Garden Cars.
           </motion.p>
 
           <motion.div variants={fadeUp} className="mt-10 flex flex-wrap items-center gap-4">
-            <a href="#nuove" className="btn btn-primary">
+            <a href="#auto" className="btn btn-primary">
               Scopri le auto
             </a>
             <a href="#pelli" className="btn btn-ghost">

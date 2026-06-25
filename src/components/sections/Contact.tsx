@@ -29,7 +29,14 @@ export default function Contact() {
           <Reveal delay={0.15}>
             <dl className="mt-8 space-y-4 text-paper/80">
               <Row label="Indirizzo" value={site.address} />
-              <Row label="Telefono" value={site.phone} href={site.phoneHref} />
+              {site.phones.map((p) => (
+                <Row
+                  key={p.href}
+                  label={`Telefono · ${p.label}`}
+                  value={p.number}
+                  href={p.href}
+                />
+              ))}
               <Row label="Email" value={site.email} href={`mailto:${site.email}`} />
             </dl>
           </Reveal>

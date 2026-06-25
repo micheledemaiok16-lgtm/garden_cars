@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { nav, site } from "@/lib/site";
+import { nav, site, isMenu } from "@/lib/site";
 
 export default function Footer() {
   return (
@@ -11,8 +11,8 @@ export default function Footer() {
             <span className="relative h-11 w-11 overflow-hidden rounded-full ring-1 ring-white/20">
               <Image src="/brand/logo.jpg" alt="Garden Cars" fill sizes="44px" className="object-cover" />
             </span>
-            <span className="font-display text-xl font-semibold">
-              Garden<span className="text-racing-bright">Cars</span>
+            <span className="font-logo -skew-x-6 text-lg font-normal tracking-tight text-paper">
+              GARDEN&apos;S <span className="text-racing-bright">CARS</span>
             </span>
           </a>
           <p className="mt-5 max-w-sm text-paper/60">
@@ -24,13 +24,16 @@ export default function Footer() {
         <div className="md:col-span-3">
           <h3 className="eyebrow text-paper/40">Naviga</h3>
           <ul className="mt-5 space-y-3">
-            {nav.map((item) => (
-              <li key={item.href}>
-                <a href={item.href} className="text-paper/70 transition-colors hover:text-racing-bright">
-                  {item.label}
-                </a>
-              </li>
-            ))}
+            {nav.map((item) => {
+              const href = isMenu(item) ? item.children[0].href : item.href;
+              return (
+                <li key={item.label}>
+                  <a href={href} className="text-paper/70 transition-colors hover:text-racing-bright">
+                    {item.label}
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </div>
 
@@ -38,11 +41,13 @@ export default function Footer() {
           <h3 className="eyebrow text-paper/40">Contatti</h3>
           <ul className="mt-5 space-y-3 text-paper/70">
             <li>{site.address}</li>
-            <li>
-              <a href={site.phoneHref} className="transition-colors hover:text-racing-bright">
-                {site.phone}
-              </a>
-            </li>
+            {site.phones.map((p) => (
+              <li key={p.href}>
+                <a href={p.href} className="transition-colors hover:text-racing-bright">
+                  {p.number} <span className="text-paper/40">· {p.label}</span>
+                </a>
+              </li>
+            ))}
             <li>
               <a href={`mailto:${site.email}`} className="transition-colors hover:text-racing-bright">
                 {site.email}
@@ -67,7 +72,7 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="wrap flex flex-col items-center justify-between gap-3 py-6 text-sm text-paper/50 sm:flex-row">
           <p>
-            © {new Date().getFullYear()} Garden Cars
+            © {new Date().getFullYear()} {site.legalName}
             {site.vat ? ` · ${site.vat}` : ""}
           </p>
           <p>Tutti i diritti riservati.</p>

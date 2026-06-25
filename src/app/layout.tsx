@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Manrope } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import SmoothScroll from "@/components/providers/SmoothScroll";
 import { site } from "@/lib/site";
@@ -15,6 +16,13 @@ const body = Manrope({
   variable: "--font-manrope",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+// Marchio "Garden's Cars": font Ethnocentric (auto-hostato) per il wordmark del logo.
+const logo = localFont({
+  src: "./fonts/Ethnocentric-Regular.otf",
+  variable: "--font-logo",
   display: "swap",
 });
 
@@ -100,7 +108,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="it" className={`${display.variable} ${body.variable}`}>
+    <html lang="it" className={`${display.variable} ${body.variable} ${logo.variable}`}>
       <body className="min-h-screen bg-ink text-paper">
         <script
           type="application/ld+json"
