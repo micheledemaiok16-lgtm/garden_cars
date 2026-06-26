@@ -28,10 +28,10 @@ export const treatments: readonly Treatment[] = [
     intro: "Contenuto in arrivo: descrizione del servizio di lucidatura.",
   },
   {
-    id: "trattamento-pelle",
-    label: "Trattamento pelle",
-    title: "Trattamento pelle",
-    intro: "Contenuto in arrivo: descrizione del trattamento della pelle.",
+    id: "restauro-pelle",
+    label: "Restauro pelle",
+    title: "Restauro pelle",
+    intro: "Pulizia, rigenerazione e protezione di pelle, volante e abitacolo.",
   },
   {
     id: "car-detailing",

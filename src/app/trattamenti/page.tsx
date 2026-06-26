@@ -4,6 +4,7 @@ import Footer from "@/components/layout/Footer";
 import { Reveal } from "@/components/ui/Reveal";
 import { TreatmentSection } from "@/components/sections/TreatmentSection";
 import { LucidaturaSection } from "@/components/sections/treatments/LucidaturaSection";
+import { RestauroPelleSection } from "@/components/sections/treatments/RestauroPelleSection";
 import { treatments } from "@/lib/treatments";
 
 export const metadata: Metadata = {
@@ -56,13 +57,13 @@ export default function TreatmentsPage() {
           <div className="tricolore-line mt-12 h-[2px] w-full opacity-80" />
         </header>
 
-        {treatments.map((t, i) =>
-          t.id === "lucidatura" ? (
-            <LucidaturaSection key={t.id} index={i} />
-          ) : (
-            <TreatmentSection key={t.id} treatment={t} index={i} />
-          ),
-        )}
+        {treatments.map((t, i) => {
+          if (t.id === "lucidatura")
+            return <LucidaturaSection key={t.id} index={i} />;
+          if (t.id === "restauro-pelle")
+            return <RestauroPelleSection key={t.id} index={i} />;
+          return <TreatmentSection key={t.id} treatment={t} index={i} />;
+        })}
       </main>
       <Footer />
     </>
