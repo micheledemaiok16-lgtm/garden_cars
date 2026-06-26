@@ -42,28 +42,33 @@ export default function Contact() {
           </Reveal>
 
           <Reveal delay={0.2}>
-            <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-              <h3 className="font-display text-sm font-semibold">Orari</h3>
-              <ul className="mt-3 space-y-1.5 text-sm text-paper/70">
-                {site.hours.map((h) => (
-                  <li key={h.day} className="flex justify-between gap-4">
-                    <span>{h.day}</span>
-                    <span className="text-paper/50">{h.time}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Reveal>
-
-          <Reveal delay={0.25}>
-            <div className="mt-6 overflow-hidden rounded-2xl ring-1 ring-white/10">
+            <a
+              href={site.mapLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Apri ${site.address} su Google Maps`}
+              className="group relative mt-6 block overflow-hidden rounded-2xl ring-1 ring-white/10 transition-shadow hover:shadow-[0_20px_50px_-20px_rgba(0,0,0,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-racing-bright"
+            >
               <iframe
                 title={`Mappa di ${site.city}`}
                 src={site.mapEmbed}
                 loading="lazy"
-                className="h-56 w-full grayscale-[0.3]"
+                referrerPolicy="no-referrer-when-downgrade"
+                className="pointer-events-none h-56 w-full grayscale-[0.3] transition-[filter] duration-500 group-hover:grayscale-0"
               />
-            </div>
+              {/* Badge "Apri in Google Maps" */}
+              <span className="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-ink/80 px-3 py-1.5 font-display text-xs font-medium text-paper backdrop-blur-sm ring-1 ring-white/10 transition-colors group-hover:text-racing-bright">
+                <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden>
+                  <path
+                    d="M12 21s-6-5.686-6-10a6 6 0 1112 0c0 4.314-6 10-6 10z"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  />
+                  <circle cx="12" cy="11" r="2.2" stroke="currentColor" strokeWidth="1.8" />
+                </svg>
+                Apri in Google Maps
+              </span>
+            </a>
           </Reveal>
         </div>
 
@@ -118,6 +123,23 @@ export default function Contact() {
                 policy.
               </p>
             </form>
+          </Reveal>
+
+          {/* Orari, sotto al form */}
+          <Reveal delay={0.1}>
+            <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+              <h3 className="font-display text-sm font-semibold">Orari</h3>
+              <ul className="mt-3 grid gap-1.5 text-sm text-paper/70 sm:grid-cols-3">
+                {site.hours.map((h) => (
+                  <li key={h.day} className="flex flex-col">
+                    <span className="font-display font-medium text-paper/90">
+                      {h.day}
+                    </span>
+                    <span className="text-paper/50">{h.time}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </Reveal>
         </div>
       </div>

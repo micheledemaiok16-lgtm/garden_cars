@@ -35,10 +35,13 @@ export const site = {
     { label: "Facebook", href: "#" },
     { label: "WhatsApp", href: "#" },
   ],
-  // Coordinate approssimative di Giffoni Valle Piana per la mappa
+  // Coordinate approssimative di Giffoni Valle Piana per la mappa.
+  // mapEmbed: anteprima Google Maps (iframe, nessuna API key richiesta).
+  // mapLink: apre Google Maps — app su telefono, nuova scheda su PC.
   mapEmbed:
-    "https://www.openstreetmap.org/export/embed.html?bbox=14.92%2C40.69%2C14.97%2C40.72&layer=mapnik&marker=40.7056%2C14.945",
-  mapLink: "https://www.openstreetmap.org/?mlat=40.7056&mlon=14.945#map=14/40.7056/14.945",
+    "https://www.google.com/maps?q=40.7056,14.945&z=15&hl=it&output=embed",
+  mapLink:
+    "https://www.google.com/maps/search/?api=1&query=40.7056%2C14.945",
 } as const;
 
 export type NavLink = { label: string; href: string };

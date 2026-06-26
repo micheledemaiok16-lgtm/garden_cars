@@ -46,8 +46,12 @@ export default function Hero() {
     offset: ["start start", "end start"],
   });
   const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "22%"]);
-  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
-  const fade = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  // Il contenuto sale leggermente con lo scroll (parallasse naturale, verso
+  // l'alto): così i pulsanti in basso non vengono spinti fuori dallo schermo.
+  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "-12%"]);
+  // Il contenuto resta pieno per buona parte dell'hero, poi sfuma verso la fine
+  // dello scroll: evita che testo e pulsanti spariscano troppo presto.
+  const fade = useTransform(scrollYProgress, [0.5, 1], [1, 0]);
 
   return (
     <section
@@ -131,8 +135,8 @@ export default function Hero() {
           animate="show"
           className="max-w-2xl"
         >
-          <motion.div variants={fadeUp} className="mb-7 flex items-center gap-4">
-            <span className="relative h-12 w-12 overflow-hidden rounded-full ring-2 ring-racing-bright/40 lg:hidden">
+          <motion.div variants={fadeUp} className="mb-7 flex items-center gap-4 lg:hidden">
+            <span className="relative h-12 w-12 overflow-hidden rounded-full ring-2 ring-racing-bright/40">
               <Image src="/brand/logo.jpg" alt="Garden Cars" fill sizes="48px" className="object-cover" />
             </span>
           </motion.div>
@@ -147,14 +151,14 @@ export default function Hero() {
 
           <motion.p
             variants={fadeUp}
-            className="mt-7 max-w-xl text-lg leading-relaxed text-paper/80"
+            className="mt-6 max-w-xl text-lg leading-relaxed text-paper/80"
           >
             Auto nuove e usate selezionate e trattamenti professionali, dalla pelle
             al detailing, per riportare ogni vettura al suo splendore. Benvenuto in
             Garden Cars.
           </motion.p>
 
-          <motion.div variants={fadeUp} className="mt-10 flex flex-wrap items-center gap-4">
+          <motion.div variants={fadeUp} className="mt-8 flex flex-wrap items-center gap-4">
             <a href="#auto" className="btn btn-primary">
               Scopri le auto
             </a>
