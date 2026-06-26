@@ -149,8 +149,8 @@ export default function Hero() {
             variants={fadeUp}
             className="mt-7 max-w-xl text-lg leading-relaxed text-paper/80"
           >
-            Auto nuove e usate selezionate e trattamenti professionali — dalla pelle
-            al detailing — per riportare ogni vettura al suo splendore. Benvenuto in
+            Auto nuove e usate selezionate e trattamenti professionali, dalla pelle
+            al detailing, per riportare ogni vettura al suo splendore. Benvenuto in
             Garden Cars.
           </motion.p>
 

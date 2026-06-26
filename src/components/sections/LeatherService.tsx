@@ -149,7 +149,7 @@ export default function LeatherService() {
                 >
                   <Image
                     src={steps[active].img}
-                    alt={`Restauro pelle — fase ${steps[active].n}: ${steps[active].title}`}
+                    alt={`Restauro pelle, fase ${steps[active].n}: ${steps[active].title}`}
                     fill
                     sizes="(max-width: 1024px) 100vw, 55vw"
                     className="object-cover"
@@ -175,7 +175,7 @@ export default function LeatherService() {
               {/* Etichetta fase */}
               <div className="absolute bottom-5 left-5 right-5">
                 <span className="font-display text-xs font-semibold uppercase tracking-wider text-racing-bright">
-                  Fase {steps[active].n} — {steps[active].title}
+                  Fase {steps[active].n}: {steps[active].title}
                 </span>
                 <AnimatePresence mode="wait">
                   <motion.p

@@ -32,7 +32,7 @@ const description =
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.gardencars.it"),
   title: {
-    default: "Garden Cars — Concessionaria a Giffoni Valle Piana (SA)",
+    default: "Garden Cars, Concessionaria a Giffoni Valle Piana (SA)",
     template: "%s · Garden Cars",
   },
   description,
@@ -50,20 +50,20 @@ export const metadata: Metadata = {
     locale: "it_IT",
     url: "https://www.gardencars.it",
     siteName: "Garden Cars",
-    title: "Garden Cars — Passione su quattro ruote",
+    title: "Garden Cars, Passione su quattro ruote",
     description,
     images: [
       {
         url: "/generated/hero.webp",
         width: 1200,
         height: 630,
-        alt: "Garden Cars — showroom auto a Giffoni Valle Piana",
+        alt: "Garden Cars, showroom auto a Giffoni Valle Piana",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Garden Cars — Passione su quattro ruote",
+    title: "Garden Cars, Passione su quattro ruote",
     description,
     images: ["/generated/hero.webp"],
   },

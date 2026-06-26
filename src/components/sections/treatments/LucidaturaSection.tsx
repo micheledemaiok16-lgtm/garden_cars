@@ -31,7 +31,7 @@ export function LucidaturaSection({ index }: { index: number }) {
             diversa grana eliminiamo graffi superficiali, aloni (swirl),
             ossidazione e opacità, correggendo la vernice strato dopo strato fino
             all&apos;effetto specchio. Rinnoviamo anche i fari opachi e ingialliti,
-            riportandoli trasparenti — per estetica e sicurezza — e i montanti e le
+            riportandoli trasparenti, per estetica e sicurezza, e i montanti e le
             plastiche lucide. Al termine sigilliamo la superficie per far durare il
             risultato nel tempo.
           </p>

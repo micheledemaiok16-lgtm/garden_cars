@@ -67,7 +67,7 @@ export default function Navbar() {
         )}
       >
         <nav className="wrap flex h-[72px] items-center justify-between">
-          <Link href="/#top" className="flex items-center gap-3" aria-label="Garden Cars — home">
+          <Link href="/#top" className="flex items-center gap-3" aria-label="Garden Cars, home">
             <span className="relative h-10 w-10 overflow-hidden rounded-full ring-1 ring-white/20">
               <Image src="/brand/logo.jpg" alt="Garden Cars" fill sizes="40px" className="object-cover" />
             </span>
