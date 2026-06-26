@@ -3,6 +3,8 @@
  * e collegabili in futuro a un CMS / gestionale.
  */
 
+import { treatments } from "@/lib/treatments";
+
 export const site = {
   name: "Garden Cars",
   legalName: "GARDEN'S CARS S.r.l.s.",
@@ -22,7 +24,7 @@ export const site = {
   email: "gardenscarsgiffoni@gmail.com",
   vat: "P.IVA 05726810657",
   // Prenotazione consulenza: per ora rimanda ai contatti, in futuro link Calendly.
-  consultHref: "#contatti",
+  consultHref: "/#contatti",
   hours: [
     { day: "Lun – Ven", time: "09:00 – 13:00 · 15:30 – 19:30" },
     { day: "Sabato", time: "09:00 – 13:00" },
@@ -44,22 +46,18 @@ export type NavMenu = { label: string; children: readonly NavLink[] };
 export type NavItem = NavLink | NavMenu;
 
 export const nav: readonly NavItem[] = [
-  { label: "Auto", href: "#auto" },
+  { label: "Auto", href: "/#auto" },
   {
     label: "Trattamenti",
-    children: [
-      // Le sezioni dedicate ai singoli trattamenti non esistono ancora:
-      // per ora puntano all'area trattamenti (#pelli). Ricollegare quando
-      // verranno create le sezioni specifiche.
-      { label: "Lucidatura", href: "#pelli" },
-      { label: "Trattamento pelle", href: "#pelli" },
-      { label: "Car detailing", href: "#pelli" },
-      { label: "Trattamento vetri", href: "#pelli" },
-      { label: "Centraline", href: "#pelli" },
-    ],
+    // Le voci puntano alle sezioni della pagina dedicata /trattamenti.
+    // La sorgente è treatments.ts, così menu e pagina restano allineati.
+    children: treatments.map((t) => ({
+      label: t.label,
+      href: `/trattamenti#${t.id}`,
+    })),
   },
-  { label: "Chi siamo", href: "#chi-siamo" },
-  { label: "Contatti", href: "#contatti" },
+  { label: "Chi siamo", href: "/#chi-siamo" },
+  { label: "Contatti", href: "/#contatti" },
 ];
 
 // Type guard per distinguere una voce con sottomenu da un link semplice.

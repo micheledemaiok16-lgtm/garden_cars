@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { nav, site, isMenu, type NavItem } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -66,14 +67,14 @@ export default function Navbar() {
         )}
       >
         <nav className="wrap flex h-[72px] items-center justify-between">
-          <a href="#top" className="flex items-center gap-3" aria-label="Garden Cars — home">
+          <Link href="/#top" className="flex items-center gap-3" aria-label="Garden Cars — home">
             <span className="relative h-10 w-10 overflow-hidden rounded-full ring-1 ring-white/20">
               <Image src="/brand/logo.jpg" alt="Garden Cars" fill sizes="40px" className="object-cover" />
             </span>
             <span className="font-logo -skew-x-6 whitespace-nowrap text-base font-normal tracking-tight text-paper">
               GARDEN&apos;S <span className="text-racing-bright">CARS</span>
             </span>
-          </a>
+          </Link>
 
           <ul className="hidden items-center gap-8 lg:flex xl:gap-12">
             {nav.map((item) => (

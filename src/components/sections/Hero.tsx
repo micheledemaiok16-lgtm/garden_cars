@@ -135,9 +135,6 @@ export default function Hero() {
             <span className="relative h-12 w-12 overflow-hidden rounded-full ring-2 ring-racing-bright/40 lg:hidden">
               <Image src="/brand/logo.jpg" alt="Garden Cars" fill sizes="48px" className="object-cover" />
             </span>
-            <span className="eyebrow text-racing-bright">
-              Giffoni Valle Piana · Salerno
-            </span>
           </motion.div>
 
           <h1 className="display-hero">

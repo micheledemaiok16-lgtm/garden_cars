@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { nav, site, isMenu } from "@/lib/site";
 
 export default function Footer() {
@@ -7,14 +8,14 @@ export default function Footer() {
       <div className="tricolore-line h-[3px] w-full" />
       <div className="wrap grid gap-12 py-16 md:grid-cols-12">
         <div className="md:col-span-5">
-          <a href="#top" className="flex items-center gap-3" aria-label="Garden Cars">
+          <Link href="/#top" className="flex items-center gap-3" aria-label="Garden Cars">
             <span className="relative h-11 w-11 overflow-hidden rounded-full ring-1 ring-white/20">
               <Image src="/brand/logo.jpg" alt="Garden Cars" fill sizes="44px" className="object-cover" />
             </span>
             <span className="font-logo -skew-x-6 text-lg font-normal tracking-tight text-paper">
               GARDEN&apos;S <span className="text-racing-bright">CARS</span>
             </span>
-          </a>
+          </Link>
           <p className="mt-5 max-w-sm text-paper/60">
             Vendita auto nuove e usate e trattamento professionale di pelli e sedili
             a {site.city} ({site.province}). {site.tagline}.
