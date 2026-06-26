@@ -2,30 +2,32 @@ import Image from "next/image";
 import Link from "next/link";
 import { Reveal } from "@/components/ui/Reveal";
 
+const BASE = "/trattamenti/restauro-pelle";
+
 const fasi = [
   {
     n: "01",
     title: "Analisi",
     body: "Valutiamo pelle, cuciture e usura per scegliere il trattamento giusto.",
-    img: "/generated/pelle-step1.png",
+    img: `${BASE}/fase-1.png`,
   },
   {
     n: "02",
     title: "Pulizia profonda",
     body: "Rimuoviamo sporco, aloni e residui rispettando la grana naturale.",
-    img: "/generated/pelle-step2.png",
+    img: `${BASE}/fase-2.png`,
   },
   {
     n: "03",
     title: "Rigenerazione",
     body: "Nutrizione e ripristino del colore: morbidezza, tono e compattezza.",
-    img: "/generated/pelle-step3.png",
+    img: `${BASE}/fase-3.png`,
   },
   {
     n: "04",
     title: "Protezione",
     body: "Sigillante contro UV, macchie e usura per far durare il risultato.",
-    img: "/generated/pelle-step4.png",
+    img: `${BASE}/fase-4.png`,
   },
 ];
 
@@ -89,7 +91,7 @@ export function RestauroPelleSection({ index }: { index: number }) {
             <div className="grid grid-cols-2 gap-4">
               <div className="relative col-span-2 aspect-[4/3] overflow-hidden rounded-3xl ring-1 ring-ink/10">
                 <Image
-                  src="/trattamenti/restauro-pelle/volante.jpg"
+                  src={`${BASE}/volante.jpg`}
                   alt="Volante in pelle pulito e rigenerato"
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
@@ -98,7 +100,7 @@ export function RestauroPelleSection({ index }: { index: number }) {
               </div>
               <div className="relative aspect-square overflow-hidden rounded-2xl ring-1 ring-ink/10">
                 <Image
-                  src="/generated/abitacolo.webp"
+                  src={`${BASE}/abitacolo.webp`}
                   alt="Abitacolo con interni in pelle"
                   fill
                   sizes="(max-width: 1024px) 50vw, 25vw"
@@ -107,7 +109,7 @@ export function RestauroPelleSection({ index }: { index: number }) {
               </div>
               <div className="relative aspect-square overflow-hidden rounded-2xl ring-1 ring-ink/10">
                 <Image
-                  src="/generated/pelle-sedile.webp"
+                  src={`${BASE}/pelle-sedile.webp`}
                   alt="Sedile in pelle rigenerato"
                   fill
                   sizes="(max-width: 1024px) 50vw, 25vw"
