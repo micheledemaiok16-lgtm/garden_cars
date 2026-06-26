@@ -26,14 +26,9 @@ export function LucidaturaSection({ index }: { index: number }) {
         </Reveal>
         <Reveal delay={0.1}>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-paper/70">
-            La lucidatura professionale restituisce alla carrozzeria profondità,
-            brillantezza e protezione. Con macchine orbitali e paste abrasive di
-            diversa grana eliminiamo graffi superficiali, aloni (swirl),
-            ossidazione e opacità, correggendo la vernice strato dopo strato fino
-            all&apos;effetto specchio. Rinnoviamo anche i fari opachi e ingialliti,
-            riportandoli trasparenti, per estetica e sicurezza, e i montanti e le
-            plastiche lucide. Al termine sigilliamo la superficie per far durare il
-            risultato nel tempo.
+            Eliminiamo graffi, aloni e opacità correggendo la vernice fino
+            all&apos;effetto specchio. Rinnoviamo anche fari, montanti e plastiche
+            lucide, sigillando la superficie per un risultato che dura nel tempo.
           </p>
         </Reveal>
 
