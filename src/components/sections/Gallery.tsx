@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Reveal, RevealGroup, RevealItem } from "@/components/ui/Reveal";
 
@@ -15,6 +15,21 @@ const shots = [
 
 export default function Gallery() {
   const [active, setActive] = useState<number | null>(null);
+
+  // Lightbox aperto: chiusura con Esc e blocco dello scroll di fondo.
+  useEffect(() => {
+    if (active === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActive(null);
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [active]);
 
   return (
     <section id="showroom" className="relative bg-paper py-24 text-ink md:py-32">

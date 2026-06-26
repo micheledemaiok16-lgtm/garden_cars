@@ -30,17 +30,16 @@ export default function Hero() {
   const ref = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
   const [revealed, setRevealed] = useState(false);
+  // Con reduced-motion non c'è video (quindi nessun "ended"): mostra subito lo
+  // stato finale derivandolo dall'hook, senza setState dentro l'effect.
+  const shown = revealed || !!reduce;
 
   useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      setRevealed(true);
-      return;
-    }
+    if (reduce) return;
     // Fallback: se il video non emette "ended" (es. bloccato), sfoca comunque
     const t = setTimeout(() => setRevealed(true), 8000);
     return () => clearTimeout(t);
-  }, []);
+  }, [reduce]);
 
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -60,10 +59,10 @@ export default function Hero() {
       <motion.div
         style={reduce ? undefined : { y: bgY }}
         animate={{
-          filter: revealed
+          filter: shown
             ? "blur(7px) brightness(0.5)"
             : "blur(0px) brightness(1)",
-          scale: revealed ? 1.15 : 1.1,
+          scale: shown ? 1.15 : 1.1,
         }}
         transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
         className="absolute inset-0 -z-10"
@@ -101,7 +100,7 @@ export default function Hero() {
 
       {/* Logo che compare a destra a fine video, nello spazio libero */}
       <AnimatePresence>
-        {revealed && (
+        {shown && (
           <motion.div
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{ opacity: 1, scale: 1 }}

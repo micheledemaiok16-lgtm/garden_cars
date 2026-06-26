@@ -16,7 +16,7 @@ export default function Intro() {
   const imgY = useTransform(scrollYProgress, [0, 1], ["-8%", "8%"]);
 
   return (
-    <section className="relative overflow-hidden bg-ink py-24 md:py-36 lg:py-44">
+    <section id="chi-siamo" className="relative overflow-hidden bg-ink py-24 md:py-36 lg:py-44">
       <ScrollWheel
         className="absolute -left-32 bottom-0 hidden lg:block"
         size={450}

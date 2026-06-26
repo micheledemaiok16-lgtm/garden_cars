@@ -58,8 +58,7 @@ export const nav: readonly NavItem[] = [
       { label: "Centraline", href: "#pelli" },
     ],
   },
-  // Sezione "Chi siamo" in arrivo (foto da inserire): per ora rimanda allo showroom.
-  { label: "Chi siamo", href: "#showroom" },
+  { label: "Chi siamo", href: "#chi-siamo" },
   { label: "Contatti", href: "#contatti" },
 ];
 
