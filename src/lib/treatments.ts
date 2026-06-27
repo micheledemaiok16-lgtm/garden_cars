@@ -56,12 +56,13 @@ export interface Treatment {
 const L = "/trattamenti/lucidatura";
 const RP = "/trattamenti/restauro-pelle";
 const V = "/trattamenti/trattamento-vetri";
+const C = "/trattamenti/centraline";
 
 export const treatments: readonly Treatment[] = [
   {
     id: "restauro-pelle",
     label: "Restauro pelle",
-    title: "Interni che ritrovano vita",
+    title: "Restauro pelle",
     intro:
       "Volante consumato, sedili segnati, colori sbiaditi: riportiamo l'abitacolo all'aspetto e al profumo del primo giorno. Pulizia profonda, rigenerazione del colore e protezione duratura, per interni che valorizzano la tua auto a ogni viaggio.",
     features: [
@@ -91,7 +92,7 @@ export const treatments: readonly Treatment[] = [
   {
     id: "lucidatura",
     label: "Lucidatura",
-    title: "L'effetto specchio che dura",
+    title: "Lucidatura",
     intro:
       "Graffi, swirl e aloni spariscono sotto una correzione professionale della vernice, fino alla brillantezza dell'effetto specchio. Rinnoviamo fari, montanti e plastiche lucide, poi sigilliamo tutto per un risultato che resiste nel tempo.",
     features: [
@@ -113,7 +114,7 @@ export const treatments: readonly Treatment[] = [
   {
     id: "car-detailing",
     label: "Car detailing",
-    title: "Pulizia che protegge",
+    title: "Car detailing",
     intro:
       "Molto più di un lavaggio: protezione nanotecnologica della carrozzeria, cura della tappezzeria e trattamenti nanoceramici. La tua auto respinge acqua e sporco e mantiene la brillantezza molto più a lungo.",
     features: [
@@ -128,7 +129,7 @@ export const treatments: readonly Treatment[] = [
   {
     id: "trattamento-vetri",
     label: "Vetri & PPF",
-    title: "Protezione e stile su misura",
+    title: "Vetri & PPF",
     intro:
       "Pellicole PPF antisasso, oscuramento di vetri e fari, wrapping personalizzato: proteggiamo ogni superficie con film invisibili ad alte prestazioni e diamo alla tua auto il look che desideri.",
     features: [
@@ -148,7 +149,7 @@ export const treatments: readonly Treatment[] = [
   {
     id: "centraline",
     label: "Centraline",
-    title: "Più potenza, su misura",
+    title: "Centraline",
     intro:
       "Rimappature personalizzate per liberare il vero potenziale del motore: più cavalli, più coppia e una risposta più pronta a ogni accelerata, sempre nel pieno rispetto dell'affidabilità.",
     features: [
@@ -157,7 +158,11 @@ export const treatments: readonly Treatment[] = [
       "Aumento coppia",
       "Ottimizzazione consumi",
     ],
-    media: null,
+    media: {
+      type: "image",
+      src: `${C}/mastertuning.png`,
+      alt: "Biglietto da visita Master Tuning, partner per le rimappature",
+    },
     anim: "counter",
     stats: [
       { label: "Potenza", value: 30, prefix: "+", suffix: " CV" },

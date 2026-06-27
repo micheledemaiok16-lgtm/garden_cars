@@ -108,9 +108,7 @@ export default function Hero() {
           <motion.div
             initial={{ opacity: 0, scale: 0.7 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            style={reduce ? undefined : { opacity: fade }}
             className="pointer-events-none absolute right-[7%] top-1/2 hidden -translate-y-1/2 flex-col items-center gap-5 text-center lg:flex"
           >
             <span className="relative h-44 w-44 overflow-hidden rounded-full ring-2 ring-racing-bright/50 xl:h-56 xl:w-56">
@@ -133,7 +131,7 @@ export default function Hero() {
           variants={container}
           initial="hidden"
           animate="show"
-          className="max-w-2xl"
+          className="max-w-2xl -translate-y-10 md:-translate-y-16 lg:-translate-y-24 lg:-ml-8 xl:-ml-16"
         >
           <motion.div variants={fadeUp} className="mb-7 flex items-center gap-4 lg:hidden">
             <span className="relative h-12 w-12 overflow-hidden rounded-full ring-2 ring-racing-bright/40">
@@ -141,12 +139,13 @@ export default function Hero() {
             </span>
           </motion.div>
 
-          <h1 className="display-hero">
-            <Line variant={lineUp}>Passione</Line>
+          <h1
+            className="display-hero whitespace-nowrap"
+            style={{ fontSize: "clamp(2.25rem, 7vw, 6rem)" }}
+          >
             <Line variant={lineUp}>
-              su <span className="text-racing-bright">quattro</span>
+              Passione su <span className="text-racing-bright">quattro</span> ruote.
             </Line>
-            <Line variant={lineUp}>ruote.</Line>
           </h1>
 
           <motion.p
@@ -158,12 +157,12 @@ export default function Hero() {
             Garden Cars.
           </motion.p>
 
-          <motion.div variants={fadeUp} className="mt-8 flex flex-wrap items-center gap-4">
+          <motion.div variants={fadeUp} className="mt-12 flex flex-wrap items-center gap-4 md:mt-16">
             <a href="#auto" className="btn btn-primary">
               Scopri le auto
             </a>
-            <a href="#pelli" className="btn btn-ghost">
-              Trattamento pelli
+            <a href="/trattamenti" className="btn btn-ghost">
+              Trattamenti
             </a>
           </motion.div>
         </motion.div>
@@ -189,7 +188,7 @@ export default function Hero() {
 
 function Line({ children, variant }: { children: React.ReactNode; variant: Variants }) {
   return (
-    <span className="block overflow-hidden">
+    <span className="inline-block overflow-hidden align-bottom">
       <motion.span variants={variant} className="block">
         {children}
       </motion.span>
