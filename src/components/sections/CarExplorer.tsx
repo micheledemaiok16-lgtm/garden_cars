@@ -7,11 +7,10 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Reveal } from "@/components/ui/Reveal";
 import { treatments, type Treatment } from "@/lib/treatments";
 import { carZones, DEFAULT_ZONE_ID } from "@/lib/carZones";
-import { CounterStats } from "@/components/sections/treatments/CounterStats";
 import { cn } from "@/lib/utils";
 
 // Sorgente immagine + aspetto del render originale (2816×1536).
-const CAR_SRC = "/home/auto3d-cutout.webp";
+const CAR_SRC = "/home/nuovaauto-cutout.webp";
 const CAR_ALT =
   "Spaccato tecnico di un'auto: telaio, motore, abitacolo e carrozzeria in vista";
 const CAR_ASPECT = "2816 / 1536";
@@ -22,8 +21,9 @@ function treatmentById(id: string): Treatment {
 
 /**
  * Sezione homepage "Anatomia di un'auto": l'utente passa (desktop) o tocca
- * (mobile, via ZoneNav) le parti dell'auto e vede il servizio collegato.
- * Contenuti riusati da treatments.ts; geometria in carZones.ts.
+ * (mobile, via ZoneNav) le parti dell'auto e viene rimandato direttamente alla
+ * sezione del servizio sulla pagina /trattamenti. Niente descrizioni: solo il
+ * nome del servizio e il link diretto. Geometria in carZones.ts.
  */
 export default function CarExplorer() {
   const reduce = useReducedMotion();
@@ -32,10 +32,9 @@ export default function CarExplorer() {
 
   const active = treatmentById(activeId);
 
-  // hover/focus: cambia solo la zona attiva; tap/click: marca l'interazione
-  // (nasconde l'hint) e fissa la zona.
-  const preview = (id: string) => setActiveId(id);
-  const select = (id: string) => {
+  // hover/focus su una zona: evidenzia e mostra il nome del servizio.
+  // Il click sulla zona (o sull'etichetta) porta a /trattamenti#<id>.
+  const preview = (id: string) => {
     setActiveId(id);
     setTouched(true);
   };
@@ -50,15 +49,20 @@ export default function CarExplorer() {
       <div className="wrap relative">
         <div className="max-w-2xl">
           <Reveal>
-            <span className="eyebrow text-racing-bright">Esplora i servizi</span>
+            <span
+              className="eyebrow text-racing-bright"
+              style={{ fontSize: "clamp(1rem, 1.3vw, 1.25rem)" }}
+            >
+              Esplora i servizi
+            </span>
           </Reveal>
           <Reveal delay={0.05}>
             <h2 className="display-xl mt-5">Un&apos;auto, cinque trattamenti.</h2>
           </Reveal>
           <Reveal delay={0.1}>
             <p className="mt-5 max-w-md text-paper/70">
-              Passa sulle diverse parti dell&apos;auto e scopri come la
-              trasformiamo, dal motore alla carrozzeria.
+              Passa sulle diverse parti dell&apos;auto e vai dritto al
+              trattamento che ti interessa.
             </p>
           </Reveal>
         </div>
@@ -67,14 +71,13 @@ export default function CarExplorer() {
           <CarStage
             activeId={activeId}
             onPreview={preview}
-            onSelect={select}
             reduce={reduce}
             showHint={!touched}
           />
           <ServicePanel treatment={active} reduce={reduce} />
         </div>
 
-        <ZoneNav activeId={activeId} onSelect={select} />
+        <ZoneNav activeId={activeId} onPreview={preview} />
       </div>
     </section>
   );
@@ -85,13 +88,11 @@ export default function CarExplorer() {
 function CarStage({
   activeId,
   onPreview,
-  onSelect,
   reduce,
   showHint,
 }: {
   activeId: string;
   onPreview: (id: string) => void;
-  onSelect: (id: string) => void;
   reduce: boolean | null;
   showHint: boolean;
 }) {
@@ -133,19 +134,17 @@ function CarStage({
         transition={reduce ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       />
 
-      {/* hotspot */}
+      {/* hotspot: link diretti alla sezione del servizio su /trattamenti */}
       {carZones.map((zone) => {
         const isActive = zone.id === activeId;
         const t = treatmentById(zone.id);
         return (
-          <button
+          <Link
             key={zone.id}
-            type="button"
+            href={`/trattamenti#${zone.id}`}
             onMouseEnter={() => onPreview(zone.id)}
             onFocus={() => onPreview(zone.id)}
-            onClick={() => onSelect(zone.id)}
-            aria-label={`Scopri il servizio ${t.title}`}
-            aria-pressed={isActive}
+            aria-label={`Vai al servizio ${t.title}`}
             className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
             style={{
               left: `${zone.hit.x}%`,
@@ -166,7 +165,7 @@ function CarStage({
                 transition={{ duration: 1.4, repeat: Infinity, ease: "easeOut" }}
               />
             )}
-          </button>
+          </Link>
         );
       })}
 
@@ -188,7 +187,7 @@ function CarStage({
   );
 }
 
-/* ------------------------------ Pannello servizio --------------------------- */
+/* ----------------------- Pannello: solo nome + link ------------------------ */
 
 function ServicePanel({
   treatment,
@@ -198,7 +197,7 @@ function ServicePanel({
   reduce: boolean | null;
 }) {
   return (
-    <div className="relative min-h-[22rem]">
+    <div className="relative min-h-[16rem] lg:min-h-[19rem]">
       <AnimatePresence mode="wait">
         <motion.div
           key={treatment.id}
@@ -208,17 +207,17 @@ function ServicePanel({
           transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
         >
           <span className="eyebrow text-racing-bright">Servizio</span>
-          <h3 className="display-lg mt-3">{treatment.title}</h3>
-          <p className="mt-4 max-w-md leading-relaxed text-paper/70">
-            {treatment.intro}
-          </p>
+          <h3 className="display-lg mt-3">
+            <Link
+              href={`/trattamenti#${treatment.id}`}
+              className="transition-colors hover:text-racing-bright"
+            >
+              {treatment.title}
+            </Link>
+          </h3>
 
-          {treatment.stats && (
-            <div className="mt-6">
-              <CounterStats stats={treatment.stats} />
-            </div>
-          )}
-
+          {/* Servizi secondari: le stesse voci elencate nella sezione del
+              trattamento su /trattamenti (treatment.features). */}
           <ul className="mt-6 flex flex-wrap gap-2.5">
             {treatment.features.map((f) => (
               <li
@@ -233,9 +232,23 @@ function ServicePanel({
 
           <Link
             href={`/trattamenti#${treatment.id}`}
-            className="btn btn-primary mt-8"
+            className="group mt-7 inline-flex items-center gap-2.5 font-display text-base font-semibold text-racing-bright transition-colors hover:text-paper"
           >
-            Scopri di più
+            Vai al servizio
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1"
+              aria-hidden
+            >
+              <path
+                d="M5 12h14M13 6l6 6-6 6"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </Link>
         </motion.div>
       </AnimatePresence>
@@ -243,14 +256,14 @@ function ServicePanel({
   );
 }
 
-/* ------------------------- Nav etichette (mobile/legenda) ------------------- */
+/* ------------------- Nav etichette: link diretti (mobile/legenda) ----------- */
 
 function ZoneNav({
   activeId,
-  onSelect,
+  onPreview,
 }: {
   activeId: string;
-  onSelect: (id: string) => void;
+  onPreview: (id: string) => void;
 }) {
   return (
     <ul className="mt-10 flex flex-wrap justify-center gap-2.5 lg:mt-12">
@@ -258,25 +271,24 @@ function ZoneNav({
         const isActive = zone.id === activeId;
         return (
           <li key={zone.id}>
-            <button
-              type="button"
-              onClick={() => onSelect(zone.id)}
-              onMouseEnter={() => onSelect(zone.id)}
-              aria-pressed={isActive}
+            <Link
+              href={`/trattamenti#${zone.id}`}
+              onMouseEnter={() => onPreview(zone.id)}
+              onFocus={() => onPreview(zone.id)}
               style={{
                 borderColor: isActive
                   ? "var(--color-racing-bright)"
                   : "rgba(245,244,240,0.18)",
               }}
               className={cn(
-                "rounded-full border px-4 py-2 font-display text-sm font-medium transition-colors",
+                "inline-block rounded-full border px-4 py-2 font-display text-sm font-medium transition-colors",
                 isActive
                   ? "bg-racing-bright/15 text-paper"
                   : "text-paper/70 hover:text-paper",
               )}
             >
               {zone.label}
-            </button>
+            </Link>
           </li>
         );
       })}
