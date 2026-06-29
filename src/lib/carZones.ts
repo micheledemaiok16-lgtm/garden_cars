@@ -30,11 +30,11 @@ export interface CarZone {
 export const DEFAULT_ZONE_ID: TreatmentId = "lucidatura";
 
 export const carZones: readonly CarZone[] = [
-  { id: "centraline", label: "Motore", point: { x: 25, y: 52 }, hit: { x: 25, y: 52, rx: 11, ry: 13 } },
-  { id: "trattamento-vetri", label: "Vetri", point: { x: 38, y: 22 }, hit: { x: 40, y: 23, rx: 14, ry: 10 } },
-  { id: "restauro-pelle", label: "Interni", point: { x: 62, y: 42 }, hit: { x: 62, y: 44, rx: 12, ry: 16 } },
-  { id: "lucidatura", label: "Carrozzeria", point: { x: 85, y: 30 }, hit: { x: 85, y: 32, rx: 12, ry: 18 } },
-  { id: "car-detailing", label: "Ruote", point: { x: 60, y: 73 }, hit: { x: 60, y: 74, rx: 10, ry: 12 } },
+  { id: "centraline", label: "Motore", point: { x: 26, y: 47 }, hit: { x: 26, y: 47, rx: 10, ry: 12 } },
+  { id: "trattamento-vetri", label: "Vetri", point: { x: 41, y: 23 }, hit: { x: 41, y: 23, rx: 12, ry: 9 } },
+  { id: "restauro-pelle", label: "Interni", point: { x: 61, y: 42 }, hit: { x: 61, y: 42, rx: 11, ry: 14 } },
+  { id: "lucidatura", label: "Carrozzeria", point: { x: 87, y: 37 }, hit: { x: 87, y: 37, rx: 10, ry: 15 } },
+  { id: "car-detailing", label: "Ruote", point: { x: 45, y: 70 }, hit: { x: 45, y: 70, rx: 9, ry: 10 } },
 ] as const;
 
 // Guardia d'integrità a caricamento modulo: ogni zona deve corrispondere a un

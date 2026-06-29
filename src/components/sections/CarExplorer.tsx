@@ -11,7 +11,7 @@ import { CounterStats } from "@/components/sections/treatments/CounterStats";
 import { cn } from "@/lib/utils";
 
 // Sorgente immagine + aspetto del render originale (2816×1536).
-const CAR_SRC = "/home/auto3d.webp";
+const CAR_SRC = "/home/auto3d-cutout.webp";
 const CAR_ALT =
   "Spaccato tecnico di un'auto: telaio, motore, abitacolo e carrozzeria in vista";
 const CAR_ASPECT = "2816 / 1536";
@@ -112,6 +112,12 @@ function CarStage({
         priority
         sizes="(max-width: 1024px) 100vw, 60vw"
         className="object-contain"
+        // Sfuma il fondo immagine per nascondere la pedana chiara dello scatto
+        // studio, lasciando intatta l'auto.
+        style={{
+          maskImage: "linear-gradient(to bottom, #000 84%, transparent 99%)",
+          WebkitMaskImage: "linear-gradient(to bottom, #000 84%, transparent 99%)",
+        }}
       />
 
       {/* spotlight verde che segue la zona attiva (additivo sull'auto) */}

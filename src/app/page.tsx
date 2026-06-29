@@ -5,7 +5,8 @@ import Intro from "@/components/sections/Intro";
 import Inventory from "@/components/sections/Inventory";
 import CraftBand from "@/components/sections/CraftBand";
 import LeatherService from "@/components/sections/LeatherService";
-import Gallery from "@/components/sections/Gallery";
+import CarExplorer from "@/components/sections/CarExplorer";
+import OtherTreatments from "@/components/sections/OtherTreatments";
 import Contact from "@/components/sections/Contact";
 
 export default function Home() {
@@ -18,7 +19,8 @@ export default function Home() {
         <Inventory />
         <CraftBand />
         <LeatherService />
-        <Gallery />
+        <CarExplorer />
+        <OtherTreatments />
         <Contact />
       </main>
       <Footer />
