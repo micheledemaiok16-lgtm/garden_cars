@@ -77,7 +77,10 @@ export function ServiceRow({
       {isLucidatura && treatment.media?.type === "video" && (
         <div aria-hidden className="absolute inset-0 overflow-hidden">
           <video
-            className="h-full w-full scale-105 object-cover"
+            // Zoom + ancoraggio in alto a sinistra: l'angolo in basso a destra
+            // (dove sta il watermark Gemini del video) resta sempre fuori campo
+            // a qualsiasi proporzione della banda.
+            className="h-full w-full scale-125 object-cover object-left-top"
             autoPlay
             muted
             loop
