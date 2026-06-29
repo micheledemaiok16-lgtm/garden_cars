@@ -76,7 +76,7 @@ export function ServiceRow({
       <div className="wrap relative">
         <div
           className={cn(
-            "grid items-center gap-10 lg:grid-cols-2 lg:gap-16",
+            "relative grid items-center gap-10 lg:grid-cols-2 lg:gap-16",
             !mediaLeft && "lg:[&>*:first-child]:order-2",
           )}
         >
@@ -105,6 +105,11 @@ export function ServiceRow({
                   fromRight={mediaLeft}
                   index={index}
                 />
+                {/* Bomboletta: ancorata al titolo (angolo in alto a sinistra),
+                    così resta sempre nello stesso punto a qualsiasi larghezza. */}
+                {treatment.id === "lucidatura" && (
+                  <BombolettaDecor reduce={reduce} />
+                )}
               </span>
             </motion.h2>
 
@@ -265,7 +270,6 @@ function ServiceMedia({
   parallaxY?: MotionValue<string>;
 }) {
   const { media, anim, gallery } = treatment;
-  const reduce = useReducedMotion();
 
   // Zoom base del video (taglia la cornice esterna, come l'hero).
   const baseZoom = media?.zoom ? "scale-125" : "scale-100";
@@ -284,7 +288,9 @@ function ServiceMedia({
     <motion.div
       style={parallaxY ? { y: parallaxY } : undefined}
       className={cn(
-        "group relative aspect-[4/3] w-full overflow-hidden rounded-3xl shadow-2xl shadow-black/30 transition-shadow duration-500 hover:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.55)]",
+        "group relative w-full overflow-hidden rounded-3xl shadow-2xl shadow-black/30 transition-shadow duration-500 hover:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.55)]",
+        // Vetri: riquadro più basso (−10% d'altezza), taglia dal basso.
+        treatment.id === "trattamento-vetri" ? "aspect-[40/27]" : "aspect-[4/3]",
         dark ? "ring-1 ring-white/10" : "ring-1 ring-ink/10",
       )}
     >
@@ -348,47 +354,104 @@ function ServiceMedia({
           sizes="(max-width: 1024px) 100vw, 50vw"
           className={cn(
             "object-cover transition-all duration-700 ease-out",
-            hoverZoom,
+            // Vetri: zoom del 10% (ritaglia bordi e watermark) e ancoraggio in
+            // alto, così la riduzione d'altezza taglia dal basso.
+            treatment.id === "trattamento-vetri"
+              ? "scale-[1.1] object-top group-hover:scale-[1.15]"
+              : hoverZoom,
             illuminate,
           )}
         />
       )}
     </motion.div>
 
-      {/* Lucidatura: bomboletta inclinata in obliquo, sopra l'immagine.
-          "Sbattuta" realistica: scossa rapida e decadente su più assi
-          (su/giù + micro laterale) con wobble di polso attorno alla base. Loop
-          continuo che riparte ogni 2,5s (scossa ~0,7s + pausa 1,8s). Decorativa. */}
-      {treatment.id === "lucidatura" && (
-        <motion.div
-          aria-hidden
-          className="pointer-events-none absolute -left-[1016px] -top-[270px] z-20 h-[313px] w-[313px] origin-bottom md:h-[450px] md:w-[450px]"
-          initial={{ opacity: 0 }}
-          whileInView={{
-            opacity: 1,
-            x: reduce ? 0 : [0, 5, -4, 6, -4, 3, -2, 1, 0],
-            y: reduce ? 0 : [0, -20, 15, -24, 17, -12, 7, -3, 0],
-            rotate: reduce ? 0 : [0, -3.5, 3, -4, 3, -2, 1, -0.5, 0],
-          }}
-          viewport={{ once: false, amount: 0.4 }}
-          transition={{
-            duration: 0.95,
-            ease: "easeInOut",
-            repeat: Infinity,
-            repeatDelay: 1.8,
-            opacity: { duration: 0.4, repeat: 0 },
-          }}
-        >
-          <Image
-            src="/trattamenti/trattamento-vetri/bomboletta.png"
-            alt=""
-            fill
-            sizes="416px"
-            className="rotate-[20deg] object-contain drop-shadow-[0_15px_25px_rgba(0,0,0,0.45)]"
-          />
-        </motion.div>
-      )}
+      {/* Smerigliatrice: ancorata all'angolo in basso a destra del media, così
+          resta agganciata al riquadro a qualsiasi larghezza. */}
+      {treatment.id === "lucidatura" && <SmerigliatriceDecor />}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Decorazioni Lucidatura (bomboletta + smerigliatrice).               */
+/* Ancorate alla griglia a 2 colonne con offset/dimensioni in unità    */
+/* fluide (clamp + vw + percentuali), così mantengono la stessa        */
+/* posizione relativa su qualsiasi schermo (1366 → 2K e oltre) senza   */
+/* sbordare. Nascoste sotto `lg`, dove il layout diventa a colonna     */
+/* singola. Puramente decorative.                                      */
+/* ------------------------------------------------------------------ */
+// Bomboletta: figlia del titolo (span `relative inline-block`), ancorata
+// all'angolo in alto a sinistra. `bottom-full` la appoggia sopra il titolo;
+// le translate la fanno scendere/spostare per sfiorare la prima lettera.
+// Dimensione costante in rem così l'offset dal titolo non deriva al variare
+// della larghezza. Solo da lg in su. Decorativa.
+// "Sbattuta" realistica: scossa rapida e decadente su più assi con wobble
+// attorno alla base; loop che riparte ogni 2,5s.
+function BombolettaDecor({ reduce }: { reduce: boolean | null }) {
+  return (
+    <motion.div
+      aria-hidden
+      className="pointer-events-none absolute bottom-full left-0 z-20 hidden aspect-square w-[18rem] origin-bottom -translate-x-[40%] translate-y-[46%] lg:block xl:w-[21rem]"
+      initial={{ opacity: 0 }}
+      whileInView={{
+        opacity: 1,
+        x: reduce ? 0 : [0, 5, -4, 6, -4, 3, -2, 1, 0],
+        y: reduce ? 0 : [0, -20, 15, -24, 17, -12, 7, -3, 0],
+        rotate: reduce ? 0 : [0, -3.5, 3, -4, 3, -2, 1, -0.5, 0],
+      }}
+      viewport={{ once: false, amount: 0.4 }}
+      transition={{
+        duration: 0.95,
+        ease: "easeInOut",
+        repeat: Infinity,
+        repeatDelay: 1.8,
+        opacity: { duration: 0.4, repeat: 0 },
+      }}
+    >
+      <Image
+        src="/trattamenti/trattamento-vetri/bomboletta.png"
+        alt=""
+        fill
+        sizes="(max-width: 1024px) 0px, 21rem"
+        className="rotate-[20deg] object-contain drop-shadow-[0_15px_25px_rgba(0,0,0,0.45)]"
+      />
+    </motion.div>
+  );
+}
+
+// Smerigliatrice: figlia del wrapper del media, ancorata all'angolo in basso a
+// destra (`bottom-0 right-0`) con piccoli offset, così resta agganciata al
+// riquadro a qualsiasi larghezza senza sbordare. Solo da lg in su. Decorativa.
+// "Trema" come in funzione: vibrazione rapida e continua a bassa ampiezza.
+function SmerigliatriceDecor() {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      aria-hidden
+      className="pointer-events-none absolute bottom-0 right-0 z-20 hidden aspect-[150/78] w-[clamp(8rem,13vw,13rem)] origin-center translate-x-[18%] translate-y-[34%] lg:block"
+      initial={{ opacity: 0 }}
+      whileInView={{
+        opacity: 1,
+        x: reduce ? 0 : [0, -1.6, 1.4, -1.8, 1.6, -1.2, 1.8, -1.4, 0],
+        y: reduce ? 0 : [0, 1.4, -1.6, 1.2, -1.8, 1.6, -1.2, 1.4, 0],
+        rotate: reduce ? 0 : [0, -0.8, 0.7, -0.9, 0.8, -0.6, 0.9, -0.7, 0],
+      }}
+      viewport={{ once: false, amount: 0.4 }}
+      transition={{
+        duration: 0.42,
+        ease: "linear",
+        repeat: Infinity,
+        opacity: { duration: 0.4, repeat: 0 },
+      }}
+    >
+      <Image
+        src="/trattamenti/lucidatura/smerigliatrice.png"
+        alt=""
+        fill
+        sizes="(max-width: 1024px) 0px, 13rem"
+        className="rotate-[12deg] object-contain drop-shadow-[0_15px_25px_rgba(0,0,0,0.45)]"
+      />
+    </motion.div>
   );
 }
 
