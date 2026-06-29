@@ -4,7 +4,6 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import { Reveal } from "@/components/ui/Reveal";
-import { ScrollWheel } from "@/components/ui/ScrollWheel";
 
 export default function CraftBand() {
   const ref = useRef<HTMLElement>(null);
@@ -19,7 +18,7 @@ export default function CraftBand() {
     <section
       ref={ref}
       id="pelli"
-      className="cine-vignette relative flex min-h-[80svh] items-center overflow-hidden bg-ink pt-28 pb-16"
+      className="cine-vignette relative flex min-h-[52svh] items-center justify-center overflow-hidden bg-ink py-20 text-center md:py-28"
     >
       {/* Video di sfondo (immagine statica con reduced-motion) */}
       <motion.div
@@ -47,34 +46,23 @@ export default function CraftBand() {
             <source src="/generated/lucidatura.mp4" type="video/mp4" />
           </video>
         )}
-        <div className="absolute inset-0 bg-ink/30" />
-        <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/45 to-transparent" />
+        <div className="absolute inset-0 bg-ink/40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-ink/70 via-ink/30 to-ink/70" />
       </motion.div>
 
-      {/* Ruota che gira sullo scroll */}
-      <ScrollWheel
-        className="absolute -right-24 top-1/2 hidden -translate-y-1/2 md:block"
-        size={560}
-        spin={620}
-        opacity={0.85}
-      />
-
-      <div className="wrap relative">
+      <div className="wrap relative flex flex-col items-center">
         <Reveal>
           <span className="eyebrow text-racing-bright">Trattamento pelli e sedili</span>
         </Reveal>
         <Reveal delay={0.05}>
-          <h2 className="display-xl mt-5 max-w-3xl">
-            Cura maniacale.
-            <br />
-            Risultato che si sente.
+          <h2 className="display-lg mt-5 max-w-2xl text-balance text-paper">
+            Interni come nuovi, carrozzeria a specchio.
           </h2>
         </Reveal>
         <Reveal delay={0.1}>
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-paper/80">
-            Ogni vettura che esce dal nostro salone passa per mani esperte:
-            carrozzeria lucidata a specchio, interni rigenerati, dettagli
-            curati uno a uno. Perché un&apos;auto non si vende, si consegna.
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-paper/75">
+            Pelle rigenerata, lucidatura professionale e cura di ogni dettaglio:
+            la tua auto torna a brillare dentro e fuori.
           </p>
         </Reveal>
       </div>

@@ -1,13 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-  type Variants,
-} from "framer-motion";
+import Link from "next/link";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
+import { treatments } from "@/lib/treatments";
 
 const container: Variants = {
   hidden: {},
@@ -24,87 +20,114 @@ const fadeUp: Variants = {
   },
 };
 
+// Menu laterale: ogni voce entra da sinistra a cascata.
+const navContainer: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.35 } },
+};
+const navItem: Variants = {
+  hidden: { opacity: 0, x: -24 },
+  show: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] },
+  },
+};
+
 export function TreatmentsHero() {
   const reduce = useReducedMotion();
-  const [revealed, setRevealed] = useState(false);
-  const fallback = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Con reduced-motion mostriamo subito lo stato finale (sfocato + logo).
-  const shown = revealed || !!reduce;
-
-  useEffect(() => () => {
-    if (fallback.current) clearTimeout(fallback.current);
-  }, []);
 
   return (
     <section className="cine-vignette relative flex h-[100svh] min-h-[600px] items-center overflow-hidden pt-24 md:pt-28">
-      {/* Sfondo video: parte una volta, poi a fine riproduzione si blocca
-          sull'ultimo frame, si sfoca e si scurisce (come l'hero della home).
-          Scalato al 125% così la cornice esterna del video resta fuori campo. */}
-      <motion.div
-        animate={{
-          filter: shown
-            ? "blur(7px) brightness(0.45)"
-            : "blur(0px) brightness(1)",
-          scale: shown ? 1.12 : 1.04,
-        }}
-        transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute inset-0 -z-10 overflow-hidden"
-      >
-        <video
-          className="h-full w-full -scale-x-125 scale-y-125 object-cover"
-          autoPlay
-          muted
-          playsInline
-          preload="auto"
-          aria-hidden
-          onEnded={() => setRevealed(true)}
-          onError={() => setRevealed(true)}
-          onLoadedMetadata={(e) => {
-            // Fallback: se "ended" non scatta (video bloccato), sfoca comunque
-            // poco dopo la durata stimata del filmato.
-            if (reduce) return;
-            const ms = (e.currentTarget.duration || 8) * 1000 + 1500;
-            if (fallback.current) clearTimeout(fallback.current);
-            fallback.current = setTimeout(() => setRevealed(true), ms);
-          }}
-        >
-          <source src="/trattamenti/hero.mp4" type="video/mp4" />
-        </video>
-        {/* Overlay per leggibilità del testo */}
-        <div className="absolute inset-0 bg-gradient-to-l from-ink/90 via-ink/55 to-ink/20" />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink via-transparent to-ink/40" />
-      </motion.div>
+      {/* Sfondo: foto vetrina, leggermente sfocata. Una velatura sul lato del
+          testo (destra) garantisce il contrasto. La scala >100% evita che la
+          sfocatura scopra i bordi del riquadro. */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <Image
+          src="/trattamenti/nuovaherotrattamenti.png"
+          alt="Showroom Garden's Cars: una Fiat 500 e una Vespa d'epoca davanti al logo"
+          fill
+          priority
+          sizes="100vw"
+          className="scale-105 object-cover blur-[7px]"
+        />
+        {/* Velatura per leggibilità del testo (più densa a destra) */}
+        <div className="absolute inset-0 bg-gradient-to-l from-ink/85 via-ink/45 to-ink/15" />
+        <div className="absolute inset-0 bg-gradient-to-t from-ink via-transparent to-ink/30" />
+      </div>
 
       {/* Glow racing green */}
       <div className="glow-racing pointer-events-none absolute -right-40 top-1/3 -z-10 h-[40rem] w-[40rem] opacity-40 blur-3xl" />
 
-      {/* Logo Garden's Cars — compare a fine video, come nell'hero della home.
-          Qui a sinistra (il testo è a destra). */}
-      <AnimatePresence>
-        {shown && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.7 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            className="pointer-events-none absolute left-[7%] top-1/2 hidden -translate-y-1/2 flex-col items-center gap-5 text-center lg:flex"
-          >
-            <span className="relative h-44 w-44 overflow-hidden rounded-full ring-2 ring-racing-bright/50 xl:h-56 xl:w-56">
-              <Image
-                src="/brand/logo.jpg"
-                alt="Garden Cars"
-                fill
-                sizes="224px"
-                className="object-cover"
+      {/* Freccia "Indietro": torna alla home. In alto a sinistra, sotto la
+          navbar, allineata col menu dei trattamenti. */}
+      <motion.div
+        initial={{ opacity: 0, x: -16 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.7, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        className="absolute left-[6%] top-28 z-20 md:top-32"
+      >
+        <Link
+          href="/"
+          aria-label="Torna alla home"
+          className="group flex items-center gap-2.5 text-paper/75 transition-colors hover:text-racing-bright"
+        >
+          <span className="flex h-10 w-10 items-center justify-center rounded-full ring-1 ring-paper/25 transition-colors group-hover:ring-racing-bright">
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden
+              className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-0.5"
+            >
+              <path
+                d="M15 5l-7 7 7 7"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
-            </span>
-            <span className="font-logo -skew-x-6 text-2xl font-normal text-paper xl:text-3xl">
-              GARDEN&apos;S <span className="text-racing-bright">CARS</span>
-            </span>
-            <span className="tricolore-line h-[3px] w-20 rounded-full" />
+            </svg>
+          </span>
+          <span className="font-display text-sm font-semibold uppercase tracking-widest">
+            Indietro
+          </span>
+        </Link>
+      </motion.div>
+
+      {/* Menu laterale dei trattamenti: link diretti alle sezioni della pagina.
+          Solo da lg in su (su mobile si usa il menu "Trattamenti" della navbar). */}
+      <motion.nav
+        variants={navContainer}
+        initial="hidden"
+        animate="show"
+        aria-label="Trattamenti"
+        className="absolute left-[6%] top-1/2 z-10 hidden -translate-y-1/2 flex-col gap-3 lg:flex"
+      >
+        <motion.span
+          variants={navItem}
+          className="eyebrow mb-2 text-it-red"
+          style={{
+            fontSize: "1.2rem",
+            fontWeight: 900,
+            WebkitTextStroke: "0.6px #cd212a",
+          }}
+        >
+          I trattamenti
+        </motion.span>
+        {treatments.map((t) => (
+          <motion.div key={t.id} variants={navItem}>
+            <Link
+              href={`#${t.id}`}
+              className="group flex items-center gap-3 py-1"
+            >
+              <span className="h-px w-6 bg-paper/30 transition-all duration-300 group-hover:w-10 group-hover:bg-racing-bright" />
+              <span className="font-display text-2xl font-bold text-paper/85 transition-colors duration-300 group-hover:text-racing-bright xl:text-3xl">
+                {t.label}
+              </span>
+            </Link>
           </motion.div>
-        )}
-      </AnimatePresence>
+        ))}
+      </motion.nav>
 
       {/* Contenuto testuale: entra in Fade-in Up al caricamento della pagina */}
       <motion.div
@@ -117,6 +140,7 @@ export function TreatmentsHero() {
           <motion.span
             variants={fadeUp}
             className="eyebrow text-racing-bright"
+            style={{ fontSize: "0.864rem" }}
           >
             Cura, protezione, performance
           </motion.span>

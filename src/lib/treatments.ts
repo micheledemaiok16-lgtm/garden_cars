@@ -57,6 +57,7 @@ const L = "/trattamenti/lucidatura";
 const RP = "/trattamenti/restauro-pelle";
 const V = "/trattamenti/trattamento-vetri";
 const C = "/trattamenti/centraline";
+const CD = "/trattamenti/car-detailing";
 
 export const treatments: readonly Treatment[] = [
   {
@@ -90,6 +91,25 @@ export const treatments: readonly Treatment[] = [
     anim: "mask",
   },
   {
+    id: "car-detailing",
+    label: "Car detailing",
+    title: "Car detailing",
+    intro:
+      "Molto più di un lavaggio: protezione nanotecnologica della carrozzeria, cura della tappezzeria e trattamenti nanoceramici. La tua auto respinge acqua e sporco e mantiene la brillantezza molto più a lungo.",
+    features: [
+      "Lavaggio nanotecnologico",
+      "Pulizia tappezzeria",
+      "Trattamento nanoceramico",
+      "Effetto idrofobico",
+    ],
+    media: {
+      type: "image",
+      src: `${CD}/detailing.png`,
+      alt: "Operatore Garden's Cars che lucida la carrozzeria con la lucidatrice orbitale",
+    },
+    anim: "bounce",
+  },
+  {
     id: "lucidatura",
     label: "Lucidatura",
     title: "Lucidatura",
@@ -112,28 +132,12 @@ export const treatments: readonly Treatment[] = [
     anim: "illuminate",
   },
   {
-    id: "car-detailing",
-    label: "Car detailing",
-    title: "Car detailing",
-    intro:
-      "Molto più di un lavaggio: protezione nanotecnologica della carrozzeria, cura della tappezzeria e trattamenti nanoceramici. La tua auto respinge acqua e sporco e mantiene la brillantezza molto più a lungo.",
-    features: [
-      "Lavaggio nanotecnologico",
-      "Pulizia tappezzeria",
-      "Trattamento nanoceramico",
-      "Effetto idrofobico",
-    ],
-    media: null,
-    anim: "bounce",
-  },
-  {
     id: "trattamento-vetri",
     label: "Vetri & PPF",
     title: "Vetri & PPF",
     intro:
       "Pellicole PPF antisasso, oscuramento di vetri e fari, wrapping personalizzato: proteggiamo ogni superficie con film invisibili ad alte prestazioni e diamo alla tua auto il look che desideri.",
     features: [
-      "PPF antisasso",
       "Pellicole protettive",
       "Oscuramento vetri",
       "Oscuramento fari",
@@ -141,7 +145,7 @@ export const treatments: readonly Treatment[] = [
     ],
     media: {
       type: "image",
-      src: `${V}/ppf.png`,
+      src: `${V}/pellicola-ppf.png`,
       alt: "Pellicola PPF trasparente che protegge il faro di un'auto sportiva",
     },
     anim: "parallax",
@@ -160,8 +164,8 @@ export const treatments: readonly Treatment[] = [
     ],
     media: {
       type: "image",
-      src: `${C}/mastertuning.png`,
-      alt: "Biglietto da visita Master Tuning, partner per le rimappature",
+      src: `${C}/centralina.png`,
+      alt: "Centralina elettronica per la rimappatura del motore",
     },
     anim: "counter",
     stats: [

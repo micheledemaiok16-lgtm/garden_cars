@@ -53,6 +53,10 @@ export function ServiceRow({
   const dark = index % 2 === 0;
   const mediaLeft = index % 2 === 0;
 
+  // Lucidatura: il video riempie l'intera banda come sfondo, con il testo
+  // sovrapposto (niente colonna media dedicata).
+  const isLucidatura = treatment.id === "lucidatura";
+
   // Parallasse: il media scorre a velocità diversa rispetto al testo.
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -69,23 +73,46 @@ export function ServiceRow({
         dark ? "bg-ink text-paper" : "bg-paper text-ink",
       )}
     >
+      {/* Lucidatura: video di sfondo a tutta banda + velatura per la leggibilità. */}
+      {isLucidatura && treatment.media?.type === "video" && (
+        <div aria-hidden className="absolute inset-0 overflow-hidden">
+          <video
+            className="h-full w-full scale-105 object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster={treatment.media.poster}
+            aria-label={treatment.media.alt}
+          >
+            <source src={treatment.media.src} type="video/mp4" />
+          </video>
+          {/* Velatura più densa sul lato del testo (sinistra) per il contrasto. */}
+          <div className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/70 to-ink/30" />
+        </div>
+      )}
+
       {dark && (
         <div className="glow-racing pointer-events-none absolute -left-32 top-1/4 h-[34rem] w-[34rem] opacity-20 blur-3xl" />
       )}
 
-      <div className="wrap relative">
+      <div className="wrap relative z-10">
         <div
           className={cn(
-            "relative grid items-center gap-10 lg:grid-cols-2 lg:gap-16",
-            !mediaLeft && "lg:[&>*:first-child]:order-2",
+            "relative grid items-center gap-10 lg:gap-16",
+            !isLucidatura && "lg:grid-cols-2",
+            !mediaLeft && !isLucidatura && "lg:[&>*:first-child]:order-2",
           )}
         >
           {/* ---------------- MEDIA ---------------- */}
-          <ServiceMedia
-            treatment={treatment}
-            dark={dark}
-            parallaxY={treatment.anim === "parallax" && !reduce ? parallaxY : undefined}
-          />
+          {!isLucidatura && (
+            <ServiceMedia
+              treatment={treatment}
+              dark={dark}
+              parallaxY={treatment.anim === "parallax" && !reduce ? parallaxY : undefined}
+            />
+          )}
 
           {/* ---------------- TESTO ---------------- */}
           <motion.div
@@ -109,6 +136,11 @@ export function ServiceRow({
                     così resta sempre nello stesso punto a qualsiasi larghezza. */}
                 {treatment.id === "lucidatura" && (
                   <BombolettaDecor reduce={reduce} />
+                )}
+                {/* Smerigliatrice: stessa logica, ancorata al titolo del
+                    Car detailing (angolo in alto a sinistra). */}
+                {treatment.id === "car-detailing" && (
+                  <SmerigliatriceDecor reduce={reduce} />
                 )}
               </span>
             </motion.h2>
@@ -311,19 +343,18 @@ function ServiceMedia({
       )}
 
       {anim === "counter" && media ? (
-        // Centraline: biglietto da visita del partner, mostrato intero su
-        // pannello tech scuro (object-contain) con leggero zoom all'hover.
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-graphite via-ink to-racing-deep">
-          <div className="glow-racing pointer-events-none absolute inset-0 opacity-20 blur-2xl" />
+        // Centraline: foto che riempie tutto il riquadro (object-cover) con
+        // leggero zoom all'hover + targhetta "Officina certificata Master Tuning".
+        <>
           <Image
             src={media.src}
             alt={media.alt}
             fill
             sizes="(max-width: 1024px) 100vw, 50vw"
-            // scale-[1.08]: zoom dell'8% che ritaglia il bordo del biglietto.
-            className="scale-[1.08] object-contain p-6 transition-transform duration-700 ease-out group-hover:scale-[1.13] md:p-10"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           />
-        </div>
+          <MasterTuningBadge />
+        </>
       ) : gallery ? (
         <Collage images={gallery} />
       ) : !media ? (
@@ -365,10 +396,55 @@ function ServiceMedia({
       )}
     </motion.div>
 
-      {/* Smerigliatrice: ancorata all'angolo in basso a destra del media, così
-          resta agganciata al riquadro a qualsiasi larghezza. */}
-      {treatment.id === "lucidatura" && <SmerigliatriceDecor />}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Targhetta "Officina certificata Master Tuning".                     */
+/* Ripropone il look del biglietto da visita del partner: piastrina    */
+/* argento metallizzato, "MASTER" cromato scuro e "TUNING" rosso in     */
+/* corsivo, con spunta di certificazione. Ancorata in basso a destra    */
+/* della foto della centralina. Puramente decorativa.                   */
+/* ------------------------------------------------------------------ */
+function MasterTuningBadge() {
+  return (
+    <a
+      href="https://www.mastertuning.it/"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Officina certificata Master Tuning — vai al sito ufficiale"
+      className="absolute bottom-3 right-3 z-20 transition-transform duration-300 hover:scale-105 md:bottom-4 md:right-4"
+    >
+      <div className="flex items-center gap-2.5 rounded-xl border border-white/70 bg-gradient-to-br from-zinc-100 via-white to-zinc-300 px-3 py-2 shadow-lg shadow-black/40 ring-1 ring-black/10">
+        {/* Spunta di certificazione */}
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-red-700 shadow-inner shadow-black/30">
+          <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5 text-white" aria-hidden>
+            <path
+              d="M5 13l4 4L19 7"
+              stroke="currentColor"
+              strokeWidth={3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+        <span className="leading-none">
+          <span className="block font-display text-[9px] font-semibold uppercase tracking-[0.18em] text-zinc-600">
+            Officina certificata
+          </span>
+          <span className="mt-1 block font-display text-sm font-extrabold italic leading-none tracking-tight">
+            <span className="bg-gradient-to-b from-zinc-500 via-zinc-700 to-zinc-950 bg-clip-text text-transparent">
+              MASTER
+            </span>
+            <span className="bg-gradient-to-b from-red-500 to-red-700 bg-clip-text text-transparent">
+              {" "}
+              TUNING
+            </span>
+          </span>
+        </span>
+      </div>
+    </a>
   );
 }
 
@@ -391,7 +467,7 @@ function BombolettaDecor({ reduce }: { reduce: boolean | null }) {
   return (
     <motion.div
       aria-hidden
-      className="pointer-events-none absolute bottom-full left-0 z-20 hidden aspect-square w-[16rem] origin-bottom -translate-x-[34%] translate-y-[24%] lg:block xl:w-[18rem]"
+      className="pointer-events-none absolute bottom-full left-0 -ml-[12px] -mb-[65px] z-20 hidden aspect-square w-[16rem] origin-bottom -translate-x-[34%] translate-y-[24%] lg:block xl:w-[18rem] 2xl:-ml-[85px]"
       initial={{ opacity: 0 }}
       whileInView={{
         opacity: 1,
@@ -419,27 +495,28 @@ function BombolettaDecor({ reduce }: { reduce: boolean | null }) {
   );
 }
 
-// Smerigliatrice: figlia del wrapper del media, ancorata all'angolo in basso a
-// destra (`bottom-0 right-0`) con piccoli offset, così resta agganciata al
-// riquadro a qualsiasi larghezza senza sbordare. Solo da lg in su. Decorativa.
-// "Trema" come in funzione: vibrazione rapida e continua a bassa ampiezza.
-function SmerigliatriceDecor() {
-  const reduce = useReducedMotion();
+// Smerigliatrice: ancorata al titolo del Car detailing (angolo in alto a
+// sinistra), come la bomboletta. `bottom-full left-0` la appoggia sopra il
+// titolo; le translate la portano sopra-sinistra a sfiorare la prima lettera.
+// Offset forte a sinistra solo da 2xl in su (dove c'è margine), ridotto sotto
+// per non farla sbordare. Solo da lg in su. Decorativa.
+// Simula l'utensile IN FUNZIONE: vibrazione lenta e continua a bassa ampiezza.
+function SmerigliatriceDecor({ reduce }: { reduce: boolean | null }) {
   return (
     <motion.div
       aria-hidden
-      className="pointer-events-none absolute bottom-0 right-0 z-20 hidden aspect-[150/78] w-[clamp(8rem,13vw,13rem)] origin-center translate-x-[16%] translate-y-[8%] lg:block"
+      className="pointer-events-none absolute bottom-full left-0 z-20 hidden aspect-[150/78] w-[clamp(6.4rem,10.4vw,10.4rem)] origin-bottom -translate-x-[24%] translate-y-[9%] lg:block 2xl:-translate-x-[79%]"
       initial={{ opacity: 0 }}
       whileInView={{
         opacity: 1,
-        x: reduce ? 0 : [0, -1.6, 1.4, -1.8, 1.6, -1.2, 1.8, -1.4, 0],
-        y: reduce ? 0 : [0, 1.4, -1.6, 1.2, -1.8, 1.6, -1.2, 1.4, 0],
-        rotate: reduce ? 0 : [0, -0.8, 0.7, -0.9, 0.8, -0.6, 0.9, -0.7, 0],
+        x: reduce ? 0 : [0, -1, 1.1, -0.9, 1.2, -1, 0],
+        y: reduce ? 0 : [0, 1.1, -0.9, 1.2, -1, 0.9, 0],
+        rotate: reduce ? 0 : [0, -0.6, 0.5, -0.65, 0.5, -0.55, 0],
       }}
       viewport={{ once: false, amount: 0.4 }}
       transition={{
-        duration: 0.42,
-        ease: "linear",
+        duration: 0.7,
+        ease: "easeInOut",
         repeat: Infinity,
         opacity: { duration: 0.4, repeat: 0 },
       }}
@@ -449,7 +526,7 @@ function SmerigliatriceDecor() {
         alt=""
         fill
         sizes="(max-width: 1024px) 0px, 13rem"
-        className="rotate-[12deg] object-contain drop-shadow-[0_15px_25px_rgba(0,0,0,0.45)]"
+        className="-scale-x-100 rotate-[12deg] object-contain drop-shadow-[0_15px_25px_rgba(0,0,0,0.45)]"
       />
     </motion.div>
   );
