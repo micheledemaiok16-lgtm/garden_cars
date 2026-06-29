@@ -391,7 +391,7 @@ function BombolettaDecor({ reduce }: { reduce: boolean | null }) {
   return (
     <motion.div
       aria-hidden
-      className="pointer-events-none absolute bottom-full left-0 z-20 hidden aspect-square w-[18rem] origin-bottom -translate-x-[40%] translate-y-[46%] lg:block xl:w-[21rem]"
+      className="pointer-events-none absolute bottom-full left-0 z-20 hidden aspect-square w-[16rem] origin-bottom -translate-x-[34%] translate-y-[24%] lg:block xl:w-[18rem]"
       initial={{ opacity: 0 }}
       whileInView={{
         opacity: 1,
@@ -428,7 +428,7 @@ function SmerigliatriceDecor() {
   return (
     <motion.div
       aria-hidden
-      className="pointer-events-none absolute bottom-0 right-0 z-20 hidden aspect-[150/78] w-[clamp(8rem,13vw,13rem)] origin-center translate-x-[18%] translate-y-[34%] lg:block"
+      className="pointer-events-none absolute bottom-0 right-0 z-20 hidden aspect-[150/78] w-[clamp(8rem,13vw,13rem)] origin-center translate-x-[16%] translate-y-[8%] lg:block"
       initial={{ opacity: 0 }}
       whileInView={{
         opacity: 1,
