@@ -192,7 +192,7 @@ function CarStage({
             "radial-gradient(closest-side, color-mix(in oklab, var(--color-racing-bright) 55%, transparent), transparent)",
           mixBlendMode: "screen",
         }}
-        animate={{ left: `${activeZone.point.x}%`, top: `${activeZone.point.y}%` }}
+        animate={{ left: `${activeZone.point.x}%`, top: `${activeZone.point.y}%`, opacity: isolating ? 0 : 1 }}
         transition={reduce ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       />
 
