@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FocusEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -9,11 +9,11 @@ import { treatments, type Treatment } from "@/lib/treatments";
 import { carZones, DEFAULT_ZONE_ID } from "@/lib/carZones";
 import { cn } from "@/lib/utils";
 
-// Sorgente immagine + aspetto del render originale (2816×1536).
-const CAR_SRC = "/home/nuovaauto-cutout.webp";
+// Sorgente immagine + aspetto del cutout (bounding box 2000×1115).
+const CAR_SRC = "/home/nuovaautomodello-cutout.webp";
 const CAR_ALT =
-  "Spaccato tecnico di un'auto: telaio, motore, abitacolo e carrozzeria in vista";
-const CAR_ASPECT = "2816 / 1536";
+  "Spaccato tecnico di un SUV: motore, abitacolo, interni e carrozzeria in vista";
+const CAR_ASPECT = "2000 / 1115";
 
 function treatmentById(id: string): Treatment {
   return treatments.find((t) => t.id === id) ?? treatments[0];
@@ -28,16 +28,21 @@ function treatmentById(id: string): Treatment {
 export default function CarExplorer() {
   const reduce = useReducedMotion();
   const [activeId, setActiveId] = useState<string>(DEFAULT_ZONE_ID);
+  const [focusedId, setFocusedId] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
 
   const active = treatmentById(activeId);
 
-  // hover/focus su una zona: evidenzia e mostra il nome del servizio.
-  // Il click sulla zona (o sull'etichetta) porta a /trattamenti#<id>.
+  // hover/focus su una zona: evidenzia il servizio nel pannello (activeId, che
+  // non si svuota mai) e attiva l'isolamento della parte sull'auto (focusedId).
   const preview = (id: string) => {
     setActiveId(id);
+    setFocusedId(id);
     setTouched(true);
   };
+
+  // uscita di mouse/focus dall'area: l'auto torna intera (il pannello resta).
+  const endPreview = () => setFocusedId(null);
 
   return (
     <section
@@ -70,14 +75,20 @@ export default function CarExplorer() {
         <div className="mt-12 grid items-center gap-8 lg:mt-16 lg:grid-cols-[1.4fr_1fr] lg:gap-12">
           <CarStage
             activeId={activeId}
+            focusedId={focusedId}
             onPreview={preview}
+            onEndPreview={endPreview}
             reduce={reduce}
             showHint={!touched}
           />
           <ServicePanel treatment={active} reduce={reduce} />
         </div>
 
-        <ZoneNav activeId={activeId} onPreview={preview} />
+        <ZoneNav
+          activeId={activeId}
+          onPreview={preview}
+          onEndPreview={endPreview}
+        />
       </div>
     </section>
   );
@@ -87,19 +98,46 @@ export default function CarExplorer() {
 
 function CarStage({
   activeId,
+  focusedId,
   onPreview,
+  onEndPreview,
   reduce,
   showHint,
 }: {
   activeId: string;
+  focusedId: string | null;
   onPreview: (id: string) => void;
+  onEndPreview: () => void;
   reduce: boolean | null;
   showHint: boolean;
 }) {
   const activeZone = carZones.find((z) => z.id === activeId) ?? carZones[0];
 
+  // L'isolamento si attiva solo se la zona sotto mouse/focus ha un ritaglio
+  // dedicato (`part`); altrimenti l'auto resta intera (comportamento storico).
+  const focusedZone = focusedId
+    ? carZones.find((z) => z.id === focusedId)
+    : null;
+  const isolating = Boolean(focusedZone?.part);
+  const isoTransition = reduce
+    ? undefined
+    : "opacity 320ms cubic-bezier(0.16, 1, 0.3, 1)";
+
+  // Pulisce il focus solo quando mouse/focus lasciano davvero l'intera area
+  // (non mentre ci si sposta tra un hotspot e l'altro).
+  const handleBlur = (e: FocusEvent<HTMLDivElement>) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+      onEndPreview();
+    }
+  };
+
   return (
-    <div className="relative w-full select-none" style={{ aspectRatio: CAR_ASPECT }}>
+    <div
+      className="relative w-full select-none"
+      style={{ aspectRatio: CAR_ASPECT }}
+      onMouseLeave={onEndPreview}
+      onBlur={handleBlur}
+    >
       {/* ombra/pavimento sotto l'auto */}
       <div
         aria-hidden
@@ -113,13 +151,37 @@ function CarStage({
         priority
         sizes="(max-width: 1024px) 100vw, 60vw"
         className="object-contain"
-        // Sfuma il fondo immagine per nascondere la pedana chiara dello scatto
-        // studio, lasciando intatta l'auto.
+        // Sfuma il fondo per nascondere la pedana chiara. In isolamento l'auto
+        // intera scende a fantasma (~10%) lasciando in evidenza il livello parte.
         style={{
           maskImage: "linear-gradient(to bottom, #000 84%, transparent 99%)",
           WebkitMaskImage: "linear-gradient(to bottom, #000 84%, transparent 99%)",
+          opacity: isolating ? 0.1 : 1,
+          transition: isoTransition,
         }}
       />
+
+      {/* livelli "parte": un ritaglio trasparente per ogni zona che ne ha uno.
+          Decorativi e non cliccabili: gli hotspot restano sopra e attivabili. */}
+      {carZones.map((zone) =>
+        zone.part ? (
+          <Image
+            key={`part-${zone.id}`}
+            src={zone.part}
+            alt=""
+            aria-hidden
+            fill
+            sizes="(max-width: 1024px) 100vw, 60vw"
+            className="pointer-events-none object-contain"
+            style={{
+              maskImage: "linear-gradient(to bottom, #000 84%, transparent 99%)",
+              WebkitMaskImage: "linear-gradient(to bottom, #000 84%, transparent 99%)",
+              opacity: focusedId === zone.id ? 1 : 0,
+              transition: isoTransition,
+            }}
+          />
+        ) : null,
+      )}
 
       {/* spotlight verde che segue la zona attiva (additivo sull'auto) */}
       <motion.div
@@ -261,12 +323,24 @@ function ServicePanel({
 function ZoneNav({
   activeId,
   onPreview,
+  onEndPreview,
 }: {
   activeId: string;
   onPreview: (id: string) => void;
+  onEndPreview: () => void;
 }) {
+  const handleBlur = (e: FocusEvent<HTMLUListElement>) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+      onEndPreview();
+    }
+  };
+
   return (
-    <ul className="mt-10 flex flex-wrap justify-center gap-2.5 lg:mt-12">
+    <ul
+      className="mt-10 flex flex-wrap justify-center gap-2.5 lg:mt-12"
+      onMouseLeave={onEndPreview}
+      onBlur={handleBlur}
+    >
       {carZones.map((zone) => {
         const isActive = zone.id === activeId;
         return (
