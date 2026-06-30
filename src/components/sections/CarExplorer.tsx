@@ -14,6 +14,7 @@ const CAR_SRC = "/home/nuovaautomodello-cutout.webp";
 const CAR_ALT =
   "Spaccato tecnico di un SUV: motore, abitacolo, interni e carrozzeria in vista";
 const CAR_ASPECT = "2000 / 1115";
+const FADE_MASK = "linear-gradient(to bottom, #000 84%, transparent 99%)";
 
 function treatmentById(id: string): Treatment {
   return treatments.find((t) => t.id === id) ?? treatments[0];
@@ -154,8 +155,8 @@ function CarStage({
         // Sfuma il fondo per nascondere la pedana chiara. In isolamento l'auto
         // intera scende a fantasma (~10%) lasciando in evidenza il livello parte.
         style={{
-          maskImage: "linear-gradient(to bottom, #000 84%, transparent 99%)",
-          WebkitMaskImage: "linear-gradient(to bottom, #000 84%, transparent 99%)",
+          maskImage: FADE_MASK,
+          WebkitMaskImage: FADE_MASK,
           opacity: isolating ? 0.1 : 1,
           transition: isoTransition,
         }}
@@ -174,8 +175,8 @@ function CarStage({
             sizes="(max-width: 1024px) 100vw, 60vw"
             className="pointer-events-none object-contain"
             style={{
-              maskImage: "linear-gradient(to bottom, #000 84%, transparent 99%)",
-              WebkitMaskImage: "linear-gradient(to bottom, #000 84%, transparent 99%)",
+              maskImage: FADE_MASK,
+              WebkitMaskImage: FADE_MASK,
               opacity: focusedId === zone.id ? 1 : 0,
               transition: isoTransition,
             }}
@@ -193,7 +194,7 @@ function CarStage({
           mixBlendMode: "screen",
         }}
         animate={{ left: `${activeZone.point.x}%`, top: `${activeZone.point.y}%`, opacity: isolating ? 0 : 1 }}
-        transition={reduce ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        transition={reduce ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1], opacity: { duration: 0.32, ease: [0.16, 1, 0.3, 1] } }}
       />
 
       {/* hotspot: link diretti alla sezione del servizio su /trattamenti */}
