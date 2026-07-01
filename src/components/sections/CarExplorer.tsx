@@ -27,21 +27,32 @@ const INITIAL = carSpots.find((s) => s.id === "lucidatura") ?? carSpots[0];
  */
 export default function CarExplorer() {
   const reduce = useReducedMotion();
+  // `frame` è lo specchio del fotogramma corrente (per i pallini), aggiornato
+  // dal motore di animazione dentro Car360. `targetFrame` è l'angolo verso cui
+  // l'auto ruota dolcemente quando si seleziona un servizio; null = riposo
+  // (auto-rotazione).
   const [frame, setFrame] = useState<number>(INITIAL.anchorFrame);
+  const [targetFrame, setTargetFrame] = useState<number | null>(null);
   const [activeId, setActiveId] = useState<string>(INITIAL.id);
   const [touched, setTouched] = useState(false);
 
   const active = treatmentById(activeId);
 
-  // hover/focus su una zona: evidenzia il servizio e porta l'auto all'angolo
-  // dove quella parte è meglio visibile (anchorFrame).
+  // hover/focus su una zona: evidenzia il servizio e fa ruotare l'auto verso
+  // l'angolo dove quella parte è meglio visibile (anchorFrame).
   const preview = (id: string) => {
     setActiveId(id);
     const spot = carSpots.find((s) => s.id === id);
-    if (spot) setFrame(spot.anchorFrame);
+    if (spot) setTargetFrame(spot.anchorFrame);
     setTouched(true);
   };
-  const endPreview = () => {};
+  // uscita da una zona: torna in riposo (riprende l'auto-rotazione).
+  const endPreview = () => setTargetFrame(null);
+  // l'utente affronta l'auto: stop all'auto-rotazione, comanda il trascinamento.
+  const handleGrab = () => {
+    setTargetFrame(null);
+    setTouched(true);
+  };
 
   return (
     <section
@@ -73,10 +84,12 @@ export default function CarExplorer() {
 
         <div className="mt-12 grid items-center gap-8 lg:mt-16 lg:grid-cols-[1.4fr_1fr] lg:gap-12">
           <Car360
-            frame={frame}
+            initialFrame={INITIAL.anchorFrame}
+            targetFrame={targetFrame}
+            reduce={reduce}
             onFrameChange={setFrame}
+            onGrab={handleGrab}
             showHint={!touched}
-            onFirstDrag={() => setTouched(true)}
           >
             <CarSpots
               frame={frame}
