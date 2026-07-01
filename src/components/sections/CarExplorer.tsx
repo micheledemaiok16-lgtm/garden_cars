@@ -1,49 +1,48 @@
 "use client";
 
 import { useState, type FocusEvent } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Reveal } from "@/components/ui/Reveal";
 import { treatments, type Treatment } from "@/lib/treatments";
-import { carZones, DEFAULT_ZONE_ID } from "@/lib/carZones";
+import { carSpots } from "@/lib/carSpots";
+import type { TreatmentId } from "@/lib/carZones";
 import { cn } from "@/lib/utils";
-
-// Sorgente immagine + aspetto del cutout (bounding box 2000×1115).
-const CAR_SRC = "/home/nuovaautomodello-cutout.webp";
-const CAR_ALT =
-  "Spaccato tecnico di un SUV: motore, abitacolo, interni e carrozzeria in vista";
-const CAR_ASPECT = "2000 / 1115";
-const FADE_MASK = "linear-gradient(to bottom, #000 84%, transparent 99%)";
+import Car360 from "./Car360";
+import CarSpots from "./CarSpots";
 
 function treatmentById(id: string): Treatment {
   return treatments.find((t) => t.id === id) ?? treatments[0];
 }
 
+// Servizio/angolo di partenza: Carrozzeria (lucidatura), così il pannello non è
+// mai vuoto e l'auto parte su un tre quarti gradevole.
+const INITIAL = carSpots.find((s) => s.id === "lucidatura") ?? carSpots[0];
+
 /**
- * Sezione homepage "Anatomia di un'auto": l'utente passa (desktop) o tocca
- * (mobile, via ZoneNav) le parti dell'auto e viene rimandato direttamente alla
- * sezione del servizio sulla pagina /trattamenti. Niente descrizioni: solo il
- * nome del servizio e il link diretto. Geometria in carZones.ts.
+ * Sezione homepage "Esplora i servizi": un'auto (Audi nera) rotabile via
+ * trascinamento su cui compaiono i pallini dei servizi. Hover/tap su una zona
+ * (pallino o ZoneNav) evidenzia il servizio nel pannello e porta l'auto
+ * all'angolo dove quella parte è meglio visibile. Geometria in carSpots.ts,
+ * sequenza in carSpin.ts.
  */
 export default function CarExplorer() {
   const reduce = useReducedMotion();
-  const [activeId, setActiveId] = useState<string>(DEFAULT_ZONE_ID);
-  const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [frame, setFrame] = useState<number>(INITIAL.anchorFrame);
+  const [activeId, setActiveId] = useState<string>(INITIAL.id);
   const [touched, setTouched] = useState(false);
 
   const active = treatmentById(activeId);
 
-  // hover/focus su una zona: evidenzia il servizio nel pannello (activeId, che
-  // non si svuota mai) e attiva l'isolamento della parte sull'auto (focusedId).
+  // hover/focus su una zona: evidenzia il servizio e porta l'auto all'angolo
+  // dove quella parte è meglio visibile (anchorFrame).
   const preview = (id: string) => {
     setActiveId(id);
-    setFocusedId(id);
+    const spot = carSpots.find((s) => s.id === id);
+    if (spot) setFrame(spot.anchorFrame);
     setTouched(true);
   };
-
-  // uscita di mouse/focus dall'area: l'auto torna intera (il pannello resta).
-  const endPreview = () => setFocusedId(null);
+  const endPreview = () => {};
 
   return (
     <section
@@ -67,191 +66,33 @@ export default function CarExplorer() {
           </Reveal>
           <Reveal delay={0.1}>
             <p className="mt-5 max-w-md text-paper/70">
-              Passa sulle diverse parti dell&apos;auto e vai dritto al
-              trattamento che ti interessa.
+              Trascina per ruotare l&apos;auto e vai dritto al trattamento che ti
+              interessa.
             </p>
           </Reveal>
         </div>
 
         <div className="mt-12 grid items-center gap-8 lg:mt-16 lg:grid-cols-[1.4fr_1fr] lg:gap-12">
-          <CarStage
-            activeId={activeId}
-            focusedId={focusedId}
-            onPreview={preview}
-            onEndPreview={endPreview}
-            reduce={reduce}
+          <Car360
+            frame={frame}
+            onFrameChange={setFrame}
             showHint={!touched}
-          />
+            onFirstDrag={() => setTouched(true)}
+          >
+            <CarSpots
+              frame={frame}
+              activeId={activeId}
+              onPreview={preview}
+              onEndPreview={endPreview}
+              reduce={reduce}
+            />
+          </Car360>
           <ServicePanel treatment={active} reduce={reduce} />
         </div>
 
-        <ZoneNav
-          activeId={activeId}
-          onPreview={preview}
-          onEndPreview={endPreview}
-        />
+        <ZoneNav activeId={activeId} onPreview={preview} onEndPreview={endPreview} />
       </div>
     </section>
-  );
-}
-
-/* --------------------------- Palco auto + hotspot --------------------------- */
-
-function CarStage({
-  activeId,
-  focusedId,
-  onPreview,
-  onEndPreview,
-  reduce,
-  showHint,
-}: {
-  activeId: string;
-  focusedId: string | null;
-  onPreview: (id: string) => void;
-  onEndPreview: () => void;
-  reduce: boolean | null;
-  showHint: boolean;
-}) {
-  const activeZone = carZones.find((z) => z.id === activeId) ?? carZones[0];
-
-  // L'isolamento si attiva solo se la zona sotto mouse/focus ha un ritaglio
-  // dedicato (`part`); altrimenti l'auto resta intera (comportamento storico).
-  const focusedZone = focusedId
-    ? carZones.find((z) => z.id === focusedId)
-    : null;
-  const isolating = Boolean(focusedZone?.part);
-  const isoTransition = reduce
-    ? undefined
-    : "opacity 320ms cubic-bezier(0.16, 1, 0.3, 1)";
-
-  // Pulisce il focus solo quando mouse/focus lasciano davvero l'intera area
-  // (non mentre ci si sposta tra un hotspot e l'altro).
-  const handleBlur = (e: FocusEvent<HTMLDivElement>) => {
-    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
-      onEndPreview();
-    }
-  };
-
-  return (
-    <div
-      className="relative w-full select-none"
-      style={{ aspectRatio: CAR_ASPECT }}
-      onMouseLeave={onEndPreview}
-      onBlur={handleBlur}
-    >
-      {/* ombra/pavimento sotto l'auto */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-[8%] bottom-[5%] h-[12%] rounded-[50%] bg-black/70 blur-2xl"
-      />
-
-      <Image
-        src={CAR_SRC}
-        alt={CAR_ALT}
-        fill
-        priority
-        sizes="(max-width: 1024px) 100vw, 60vw"
-        className="object-contain"
-        // Sfuma il fondo per nascondere la pedana chiara. L'auto resta sempre
-        // intera e visibile: in hover compare solo il livello parte sopra.
-        style={{
-          maskImage: FADE_MASK,
-          WebkitMaskImage: FADE_MASK,
-          transition: isoTransition,
-        }}
-      />
-
-      {/* livelli "parte": un ritaglio trasparente per ogni zona che ne ha uno.
-          Decorativi e non cliccabili: gli hotspot restano sopra e attivabili. */}
-      {carZones.map((zone) =>
-        zone.part ? (
-          <Image
-            key={`part-${zone.id}`}
-            src={zone.part}
-            alt=""
-            aria-hidden
-            fill
-            sizes="(max-width: 1024px) 100vw, 60vw"
-            className="pointer-events-none object-contain"
-            style={{
-              maskImage: FADE_MASK,
-              WebkitMaskImage: FADE_MASK,
-              // Cutout trasparente: niente più bordo, basta il fade inferiore.
-              // Opacità/luminosità regolabili per zona: i cutout scuri (l'auto
-              // nera dei Vetri) vanno resi più chiari per staccarsi dal fondo.
-              opacity: focusedId === zone.id ? zone.partOpacity ?? 0.4 : 0,
-              filter: zone.partBrightness
-                ? `brightness(${zone.partBrightness})`
-                : undefined,
-              transition: isoTransition,
-            }}
-          />
-        ) : null,
-      )}
-
-      {/* spotlight verde che segue la zona attiva (additivo sull'auto) */}
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute h-[42%] w-[38%] -translate-x-1/2 -translate-y-1/2 rounded-full"
-        style={{
-          background:
-            "radial-gradient(closest-side, color-mix(in oklab, var(--color-racing-bright) 55%, transparent), transparent)",
-          mixBlendMode: "screen",
-        }}
-        animate={{ left: `${activeZone.point.x}%`, top: `${activeZone.point.y}%`, opacity: isolating ? 0 : 1 }}
-        transition={reduce ? { duration: 0 } : { duration: 0.5, ease: [0.16, 1, 0.3, 1], opacity: { duration: 0.32, ease: [0.16, 1, 0.3, 1] } }}
-      />
-
-      {/* hotspot: link diretti alla sezione del servizio su /trattamenti */}
-      {carZones.map((zone) => {
-        const isActive = zone.id === activeId;
-        const t = treatmentById(zone.id);
-        return (
-          <Link
-            key={zone.id}
-            href={`/trattamenti#${zone.id}`}
-            onMouseEnter={() => onPreview(zone.id)}
-            onFocus={() => onPreview(zone.id)}
-            aria-label={`Vai al servizio ${t.title}`}
-            className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
-            style={{
-              left: `${zone.hit.x}%`,
-              top: `${zone.hit.y}%`,
-              width: `${zone.hit.rx * 2}%`,
-              height: `${zone.hit.ry * 2}%`,
-            }}
-          >
-            <span
-              aria-hidden
-              className="absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-racing-bright shadow-[0_0_0_4px_rgba(46,139,67,0.25)]"
-            />
-            {!reduce && isActive && (
-              <motion.span
-                aria-hidden
-                className="absolute left-1/2 top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-racing-bright/60"
-                animate={{ scale: [1, 2.6], opacity: [0.6, 0] }}
-                transition={{ duration: 1.4, repeat: Infinity, ease: "easeOut" }}
-              />
-            )}
-          </Link>
-        );
-      })}
-
-      <AnimatePresence>
-        {showHint && (
-          <motion.div
-            aria-hidden
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            style={{ borderColor: "rgba(245,244,240,0.15)" }}
-            className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full border bg-ink/70 px-4 py-2 font-display text-xs uppercase tracking-widest text-paper/70 backdrop-blur"
-          >
-            Passa sul mezzo per esplorare
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
   );
 }
 
@@ -332,7 +173,7 @@ function ZoneNav({
   onEndPreview,
 }: {
   activeId: string;
-  onPreview: (id: string) => void;
+  onPreview: (id: TreatmentId) => void;
   onEndPreview: () => void;
 }) {
   const handleBlur = (e: FocusEvent<HTMLUListElement>) => {
@@ -347,14 +188,14 @@ function ZoneNav({
       onMouseLeave={onEndPreview}
       onBlur={handleBlur}
     >
-      {carZones.map((zone) => {
-        const isActive = zone.id === activeId;
+      {carSpots.map((spot) => {
+        const isActive = spot.id === activeId;
         return (
-          <li key={zone.id}>
+          <li key={spot.id}>
             <Link
-              href={`/trattamenti#${zone.id}`}
-              onMouseEnter={() => onPreview(zone.id)}
-              onFocus={() => onPreview(zone.id)}
+              href={`/trattamenti#${spot.id}`}
+              onMouseEnter={() => onPreview(spot.id)}
+              onFocus={() => onPreview(spot.id)}
               style={{
                 borderColor: isActive
                   ? "var(--color-racing-bright)"
@@ -367,7 +208,7 @@ function ZoneNav({
                   : "text-paper/70 hover:text-paper",
               )}
             >
-              {zone.label}
+              {spot.label}
             </Link>
           </li>
         );
