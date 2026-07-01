@@ -104,7 +104,7 @@ export const treatments: readonly Treatment[] = [
     ],
     media: {
       type: "image",
-      src: `${CD}/detailing.png`,
+      src: `${CD}/cardetailing.webp`,
       alt: "Operatore Garden's Cars che lucida la carrozzeria con la lucidatrice orbitale",
     },
     anim: "bounce",

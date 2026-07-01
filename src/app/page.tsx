@@ -3,7 +3,6 @@ import Footer from "@/components/layout/Footer";
 import Hero from "@/components/sections/Hero";
 import Intro from "@/components/sections/Intro";
 import Inventory from "@/components/sections/Inventory";
-import LeatherService from "@/components/sections/LeatherService";
 import CarExplorer from "@/components/sections/CarExplorer";
 import OtherTreatments from "@/components/sections/OtherTreatments";
 import Contact from "@/components/sections/Contact";
@@ -16,7 +15,6 @@ export default function Home() {
         <Hero />
         <Intro />
         <Inventory />
-        <LeatherService />
         <CarExplorer />
         <OtherTreatments />
         <Contact />
