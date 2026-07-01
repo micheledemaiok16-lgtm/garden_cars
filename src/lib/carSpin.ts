@@ -8,8 +8,10 @@
  * e aggiungere campioni ai pallini. Il resto del codice non cambia.
  */
 export const SPIN = {
-  frameCount: 36,
-  arcDegrees: 180,
+  frameCount: 72,
+  arcDegrees: 360,
+  // Il giro generato copre ~340° e non si richiude perfettamente: teniamo il
+  // ping-pong (wrap:false) per evitare uno "scatto" sulla giunzione finale.
   wrap: false,
   srcFor: (i: number) => `/home/spin/frame-${String(i).padStart(3, "0")}.webp`,
 };

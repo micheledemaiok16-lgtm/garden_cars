@@ -6,11 +6,15 @@ import { AnimatePresence, motion } from "framer-motion";
 import { SPIN, frameIndex, normalizeFrame } from "@/lib/carSpin";
 
 const CAR_ASPECT = "16 / 9";
-const FADE_MASK = "linear-gradient(to bottom, #000 84%, transparent 99%)";
+// Sfuma tutti e quattro i bordi del fotogramma così il rettangolo si dissolve
+// nel fondo della sezione (bg-ink) invece di sembrare un video incollato.
+const EDGE_MASK =
+  "linear-gradient(to right, transparent 0%, #000 5%, #000 95%, transparent 100%), " +
+  "linear-gradient(to bottom, transparent 0%, #000 5%, #000 82%, transparent 99%)";
 // Sensibilità del trascinamento: pixel per fotogramma.
 const PX_PER_FRAME = 14;
-// Velocità auto-rotazione (fotogrammi al ms): ~35 frame in ~11s.
-const AUTO_SPEED = 0.003;
+// Velocità auto-rotazione (fotogrammi al ms).
+const AUTO_SPEED = 0.009;
 // Soglia sotto la quale l'inerzia si considera esaurita (frame/ms).
 const VEL_EPS = 0.0006;
 
@@ -203,8 +207,10 @@ export default function Car360({
           onError={i === initialIdx ? () => setFailed(true) : undefined}
           style={{
             opacity: i === displayIdx ? 1 : 0,
-            maskImage: FADE_MASK,
-            WebkitMaskImage: FADE_MASK,
+            maskImage: EDGE_MASK,
+            WebkitMaskImage: EDGE_MASK,
+            maskComposite: "intersect",
+            WebkitMaskComposite: "source-in",
           }}
         />
       ))}

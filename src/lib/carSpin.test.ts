@@ -2,14 +2,14 @@ import { describe, it, expect } from "vitest";
 import { SPIN, normalizeFrame, frameIndex, resolveSpot } from "./carSpin";
 
 describe("SPIN config", () => {
-  it("ha 36 frame e arco 180 non-wrap", () => {
-    expect(SPIN.frameCount).toBe(36);
-    expect(SPIN.arcDegrees).toBe(180);
+  it("ha 72 frame e arco 360 non-wrap", () => {
+    expect(SPIN.frameCount).toBe(72);
+    expect(SPIN.arcDegrees).toBe(360);
     expect(SPIN.wrap).toBe(false);
   });
   it("srcFor pad a 3 cifre", () => {
     expect(SPIN.srcFor(0)).toBe("/home/spin/frame-000.webp");
-    expect(SPIN.srcFor(35)).toBe("/home/spin/frame-035.webp");
+    expect(SPIN.srcFor(71)).toBe("/home/spin/frame-071.webp");
   });
 });
 

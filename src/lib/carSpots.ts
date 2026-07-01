@@ -25,56 +25,59 @@ export interface CarSpot {
 }
 
 // Valori di partenza: auto che ruota da front-3/4 (frame 0) a rear-3/4 (frame 35).
+// Giro 360° su 72 frame: 0=3/4 ant. sx, ~9=fiancata sx, ~18=3/4 post. sx,
+// ~27=retro, ~45=fiancata dx, ~62=muso frontale, ~71≈ritorno al 3/4 ant. sx.
+// Ogni servizio è ancorato all'angolo dove la sua parte è meglio visibile e
+// distribuito lungo il giro. Valori rifiniti visivamente sui frame reali.
 export const carSpots: readonly CarSpot[] = [
   {
     id: "centraline",
     label: "Motore",
-    anchorFrame: 4,
+    anchorFrame: 62, // muso frontale (griglia + anelli)
     samples: [
-      { frame: 0, x: 22, y: 56, visible: true },
-      { frame: 4, x: 16, y: 57, visible: true },
-      { frame: 12, x: 12, y: 58, visible: false },
+      { frame: 55, x: 42, y: 58, visible: false },
+      { frame: 62, x: 50, y: 66, visible: true },
+      { frame: 69, x: 58, y: 58, visible: false },
     ],
   },
   {
     id: "trattamento-vetri",
     label: "Vetri",
-    anchorFrame: 16,
+    anchorFrame: 9, // finestrini, fiancata sinistra
     samples: [
-      { frame: 6, x: 44, y: 46, visible: false },
-      { frame: 14, x: 46, y: 45, visible: true },
-      { frame: 22, x: 54, y: 45, visible: true },
-      { frame: 30, x: 60, y: 46, visible: false },
+      { frame: 2, x: 55, y: 24, visible: false },
+      { frame: 9, x: 50, y: 27, visible: true },
+      { frame: 16, x: 47, y: 30, visible: false },
     ],
   },
   {
     id: "restauro-pelle",
     label: "Interni",
-    anchorFrame: 18,
+    anchorFrame: 46, // abitacolo attraverso i vetri, fiancata destra
     samples: [
-      { frame: 8, x: 42, y: 50, visible: false },
-      { frame: 18, x: 46, y: 50, visible: true },
-      { frame: 28, x: 54, y: 50, visible: false },
+      { frame: 40, x: 46, y: 32, visible: false },
+      { frame: 46, x: 50, y: 32, visible: true },
+      { frame: 52, x: 56, y: 32, visible: false },
     ],
   },
   {
     id: "lucidatura",
     label: "Carrozzeria",
-    anchorFrame: 18,
+    anchorFrame: 4, // 3/4 anteriore sinistro (anche vista d'apertura)
     samples: [
-      { frame: 4, x: 44, y: 60, visible: true },
-      { frame: 18, x: 50, y: 62, visible: true },
-      { frame: 34, x: 60, y: 60, visible: true },
+      { frame: 0, x: 36, y: 48, visible: true },
+      { frame: 4, x: 42, y: 50, visible: true },
+      { frame: 12, x: 52, y: 54, visible: false },
     ],
   },
   {
     id: "car-detailing",
     label: "Detailing",
-    anchorFrame: 26,
+    anchorFrame: 6, // ruota anteriore sinistra
     samples: [
-      { frame: 14, x: 70, y: 72, visible: false },
-      { frame: 24, x: 76, y: 73, visible: true },
-      { frame: 35, x: 82, y: 72, visible: true },
+      { frame: 1, x: 34, y: 72, visible: false },
+      { frame: 6, x: 30, y: 72, visible: true },
+      { frame: 12, x: 40, y: 73, visible: false },
     ],
   },
 ];
