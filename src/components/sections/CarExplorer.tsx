@@ -152,12 +152,11 @@ function CarStage({
         priority
         sizes="(max-width: 1024px) 100vw, 60vw"
         className="object-contain"
-        // Sfuma il fondo per nascondere la pedana chiara. In isolamento l'auto
-        // intera scende a fantasma (~10%) lasciando in evidenza il livello parte.
+        // Sfuma il fondo per nascondere la pedana chiara. L'auto resta sempre
+        // intera e visibile: in hover compare solo il livello parte sopra.
         style={{
           maskImage: FADE_MASK,
           WebkitMaskImage: FADE_MASK,
-          opacity: isolating ? 0.1 : 1,
           transition: isoTransition,
         }}
       />
@@ -177,7 +176,13 @@ function CarStage({
             style={{
               maskImage: FADE_MASK,
               WebkitMaskImage: FADE_MASK,
-              opacity: focusedId === zone.id ? 1 : 0,
+              // Cutout trasparente: niente più bordo, basta il fade inferiore.
+              // Opacità/luminosità regolabili per zona: i cutout scuri (l'auto
+              // nera dei Vetri) vanno resi più chiari per staccarsi dal fondo.
+              opacity: focusedId === zone.id ? zone.partOpacity ?? 0.4 : 0,
+              filter: zone.partBrightness
+                ? `brightness(${zone.partBrightness})`
+                : undefined,
               transition: isoTransition,
             }}
           />

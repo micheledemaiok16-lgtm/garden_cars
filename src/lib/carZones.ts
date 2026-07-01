@@ -28,15 +28,21 @@ export interface CarZone {
    *  Se presente, attiva l'isolamento all'hover; se assente la zona mantiene
    *  il comportamento attuale (nessun isolamento). */
   part?: string;
+  /** Opacità del livello parte quando è in focus (default 0.4). Da alzare per
+   *  cutout scuri che altrimenti si perderebbero sul fondo (es. auto nera). */
+  partOpacity?: number;
+  /** Luminosità del livello parte (CSS brightness, default 1 = nessun filtro).
+   *  Serve a staccare dal fondo scuro un cutout intrinsecamente scuro. */
+  partBrightness?: number;
 }
 
 /** Servizio attivo all'apertura (così il pannello non è mai vuoto). */
 export const DEFAULT_ZONE_ID: TreatmentId = "lucidatura";
 
 export const carZones: readonly CarZone[] = [
-  { id: "centraline", label: "Motore", point: { x: 26, y: 50 }, hit: { x: 26, y: 50, rx: 8, ry: 9 } },
-  { id: "trattamento-vetri", label: "Vetri", point: { x: 40, y: 22 }, hit: { x: 40, y: 22, rx: 11, ry: 9 } },
-  { id: "restauro-pelle", label: "Interni", point: { x: 60, y: 46 }, hit: { x: 60, y: 46, rx: 8, ry: 14 }, part: "/home/parts/restauro-pelle.webp" },
+  { id: "centraline", label: "Motore", point: { x: 26, y: 50 }, hit: { x: 26, y: 50, rx: 8, ry: 9 }, part: "/home/parts/centraline-cutout.webp" },
+  { id: "trattamento-vetri", label: "Vetri", point: { x: 40, y: 22 }, hit: { x: 40, y: 22, rx: 11, ry: 9 }, part: "/home/parts/trattamento-vetri-cutout.webp", partOpacity: 0.85, partBrightness: 1.8 },
+  { id: "restauro-pelle", label: "Interni", point: { x: 60, y: 46 }, hit: { x: 60, y: 46, rx: 8, ry: 14 }, part: "/home/parts/restauro-pelle-cutout.webp" },
   { id: "lucidatura", label: "Carrozzeria", point: { x: 93, y: 31 }, hit: { x: 93, y: 31, rx: 7, ry: 13 } },
   { id: "car-detailing", label: "Cofano", point: { x: 16, y: 34 }, hit: { x: 16, y: 34, rx: 7, ry: 8 } },
 ] as const;
