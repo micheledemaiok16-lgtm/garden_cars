@@ -101,8 +101,9 @@ I 5 servizi attuali (`centraline`/Motore, `lucidatura`/Carrozzeria,
 
 - **Drag** (pointer events: mouse + touch) → scrub del frame avanti/indietro. La
   velocità mappa lo spostamento orizzontale sul delta di frame.
-- **Auto-rotazione idle**: da fermo l'auto ruota lentamente via `requestAnimationFrame`;
-  si ferma appena l'utente inizia a trascinare o porta il focus sull'auto.
+- **Da fermo l'auto resta immobile** (nessuna auto-rotazione): parte su un
+  fotogramma iniziale e si muove solo quando l'utente trascina. Un piccolo hint
+  ("trascina per ruotare") invita all'interazione, poi svanisce al primo drag.
 - **Estremi arco (180°):** clamp con leggero rimbalzo agli estremi (nessun wrap).
   In 360° (`wrap: true`) la rotazione è continua.
 - **ZoneNav / pallini:** hover/tap porta l'auto all'`anchorFrame` della parte
@@ -115,8 +116,8 @@ I 5 servizi attuali (`centraline`/Motore, `lucidatura`/Carrozzeria,
   background dopo il mount.
 - Peso: fotogrammi WebP ottimizzati, larghezza ~1280px, `object-contain`. Obiettivo
   sequenza complessiva contenuta; caricamento differito della sezione.
-- `prefers-reduced-motion`: niente auto-rotazione; l'auto resta su un fotogramma e
-  si naviga solo via `ZoneNav`/pallini.
+- `prefers-reduced-motion`: nessun impatto sulla rotazione (già assente); vengono
+  attenuate solo le transizioni/dissolvenze dei pallini e del pannello.
 - **Fallback**: se le immagini non caricano, mostrare un fotogramma statico (o
   l'immagine attuale) con i pallini nelle posizioni dell'`anchorFrame`.
 - Navigazione da tastiera tramite `ZoneNav` (già link focalizzabili).
@@ -143,7 +144,7 @@ I 5 servizi attuali (`centraline`/Motore, `lucidatura`/Carrozzeria,
 
 ## Criteri di completamento
 
-- L'auto ruota fluidamente su ~180° con drag e auto-rotazione idle, su desktop e
+- L'auto ruota fluidamente su ~180° con il drag (immobile da ferma), su desktop e
   mobile, senza effetto "giocattolo".
 - I 5 pallini compaiono/sfumano correttamente seguendo la rotazione e linkano ai
   trattamenti.
