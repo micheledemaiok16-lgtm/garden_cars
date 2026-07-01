@@ -1,7 +1,14 @@
 import type { SpotSample } from "./carSpin";
 import { SPIN } from "./carSpin";
-import type { TreatmentId } from "./carZones";
 import { treatments } from "./treatments";
+
+/** id dei servizi mappati sull'auto (sottoinsieme degli id di treatments.ts). */
+export type TreatmentId =
+  | "centraline"
+  | "lucidatura"
+  | "restauro-pelle"
+  | "trattamento-vetri"
+  | "car-detailing";
 
 /**
  * Pallini dei servizi ancorati ai punti dell'auto lungo la rotazione. Ogni

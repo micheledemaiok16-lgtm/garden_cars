@@ -31,6 +31,9 @@ export default function Car360({
   const drag = useRef<{ startX: number; startFrame: number } | null>(null);
   const [failed, setFailed] = useState(false);
   const idx = frameIndex(frame);
+  // Fotogramma visibile al primo render: va caricato con priorità (è l'LCP).
+  // Catturato una sola volta col lazy initializer, non cambia mai.
+  const [initialIdx] = useState(() => frameIndex(frame));
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
@@ -67,13 +70,13 @@ export default function Car360({
         <Image
           key={i}
           src={SPIN.srcFor(i)}
-          alt={i === 0 ? "Audi nera Garden's Cars, vista tre quarti anteriore" : ""}
-          aria-hidden={i !== 0}
+          alt={i === initialIdx ? "Audi nera Garden's Cars su fondo scuro" : ""}
+          aria-hidden={i !== initialIdx}
           fill
-          priority={i === 0}
+          priority={i === initialIdx}
           sizes="(max-width: 1024px) 100vw, 60vw"
           className="pointer-events-none object-contain"
-          onError={i === 0 ? () => setFailed(true) : undefined}
+          onError={i === initialIdx ? () => setFailed(true) : undefined}
           style={{
             opacity: i === idx ? 1 : 0,
             maskImage: FADE_MASK,

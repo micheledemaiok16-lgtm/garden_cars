@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { carSpots } from "@/lib/carSpots";
+import { carSpots, type TreatmentId } from "@/lib/carSpots";
 import { resolveSpot } from "@/lib/carSpin";
 import { treatments } from "@/lib/treatments";
-import type { TreatmentId } from "@/lib/carZones";
 
 /**
  * Pallini dei servizi sovrapposti all'auto: ognuno segue la rotazione
