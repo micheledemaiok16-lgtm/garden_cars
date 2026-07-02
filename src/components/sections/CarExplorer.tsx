@@ -55,9 +55,16 @@ export default function CarExplorer() {
   };
 
   return (
+    // Fondo a nero puro (#000) dove sta l'auto → combacia col fondo dei
+    // fotogrammi ed elimina il "quadrato"; ai bordi torna a #0a0a0a (bg-ink)
+    // per fondersi senza gradino con le sezioni adiacenti.
     <section
       id="esplora"
-      className="relative overflow-hidden bg-ink py-24 text-paper md:py-32"
+      className="relative overflow-hidden py-24 text-paper md:py-32"
+      style={{
+        background:
+          "linear-gradient(to bottom, #0a0a0a 0%, #000 10%, #000 90%, #0a0a0a 100%)",
+      }}
     >
       <div className="glow-racing pointer-events-none absolute left-1/2 top-0 h-[40rem] w-[40rem] -translate-x-1/2 opacity-20 blur-3xl" />
 
@@ -82,7 +89,7 @@ export default function CarExplorer() {
           </Reveal>
         </div>
 
-        <div className="mt-12 grid items-center gap-8 lg:mt-16 lg:grid-cols-[1.4fr_1fr] lg:gap-12">
+        <div className="mt-12 grid items-center gap-8 lg:mt-16 lg:grid-cols-[1.75fr_0.9fr] lg:gap-10">
           <Car360
             initialFrame={INITIAL.anchorFrame}
             targetFrame={targetFrame}

@@ -1,0 +1,8 @@
+# File temporanei della pipeline di rendering 360 (video sorgente orbitale,
+# frame PNG intermedi, misure di luminosità). Nel repo vanno versionati solo
+# gli asset finali: spin-loop.mp4 (eccezione sotto) e spin-poster.webp.
+*.mp4
+!spin-loop.mp4
+*.png
+*.csv
+*.txt
