@@ -57,7 +57,7 @@ vertici della ricostruzione), cofano effetto cromo (metalnessMap sporca),
 tetto grigio, illuminazione generica. Interventi, in ordine di leva:
 
 1. **Smoothing geometria** (`tools/smooth-glb.mjs`): Taubin λ=0.5/μ=-0.53,
-   5 iterazioni, sul grafo dei vertici raggruppati per posizione (i vertici
+   10 iterazioni, sul grafo dei vertici raggruppati per posizione (i vertici
    sono splittati sulle cuciture UV: mossi indipendenti aprirebbero crepe),
    normali smooth ricalcolate per gruppo pesate sull'area. Pipeline:
    `audi-raw.glb → smooth-glb.mjs → audi-smooth.glb → gltf-transform

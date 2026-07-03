@@ -244,13 +244,17 @@ export default function Car3D({
             m.rotation.y = ry;
             env.add(m);
           };
-          strip(14, 1.5, 10, [0, 6, 0], Math.PI / 2, 0); // softbox principale
-          strip(12, 1, 4.5, [0, 5, -5], Math.PI / 3, 0); // striscia posteriore
-          strip(10, 0.8, 3, [0, 4, 5.5], -Math.PI / 2.7, 0); // fill frontale
-          strip(7, 3.5, 1.6, [-9, 2.6, 0], 0, Math.PI / 2, 0xcfdcff); // quinta sx
-          strip(7, 3.5, 1.6, [9, 2.6, 0], 0, -Math.PI / 2, 0xcfdcff); // quinta dx
-          strip(8, 3, 1.4, [0, 2.5, -9], 0, 0, 0xcfdcff); // fondale dietro
-          strip(8, 3, 1.1, [0, 2.5, 9], 0, Math.PI, 0xcfdcff); // fondale davanti
+          // UNA lama principale definita + contorni deboli: la vernice nera
+          // vera in ambiente scuro ha pochi riflessi netti, non un bagno di
+          // luce uniforme (che appiattisce il Fresnel e legge "plastica").
+          strip(14, 0.7, 12, [0, 6, 0], Math.PI / 2, 0); // lama principale
+          strip(14, 0.35, 4, [0, 6, -1.6], Math.PI / 2, 0); // contorno freddo
+          strip(12, 0.6, 4, [0, 5, -5], Math.PI / 3, 0); // striscia posteriore
+          strip(10, 0.5, 2.5, [0, 4, 5.5], -Math.PI / 2.7, 0); // fill frontale
+          strip(7, 3.5, 1.0, [-9, 2.6, 0], 0, Math.PI / 2, 0xcfdcff); // quinta sx
+          strip(7, 3.5, 1.0, [9, 2.6, 0], 0, -Math.PI / 2, 0xcfdcff); // quinta dx
+          strip(8, 3, 0.8, [0, 2.5, -9], 0, 0, 0xcfdcff); // fondale dietro
+          strip(8, 3, 0.6, [0, 2.5, 9], 0, Math.PI, 0xcfdcff); // fondale davanti
           return env;
         };
 
@@ -272,13 +276,13 @@ export default function Car3D({
 
         // PMREM dell'ambiente studio, sigma minimo → riflessi nitidi sulla
         // vernice. Il fondo del canvas resta trasparente (nero della sezione).
-        // Sigma non minimo: riflessi un filo morbidi — su una mesh ricostruita
-        // dall'AI gli specular troppo nitidi rivelano ogni grinza dei pannelli.
+        // Sigma medio: abbastanza nitido da leggere "vernice", abbastanza
+        // morbido da non rivelare le grinze residue della ricostruzione AI.
         const pmrem = new THREE.PMREMGenerator(renderer);
-        pmremTexture = pmrem.fromScene(buildStudioEnv(), 0.09).texture;
+        pmremTexture = pmrem.fromScene(buildStudioEnv(), 0.045).texture;
         pmrem.dispose();
         scene.environment = pmremTexture;
-        scene.environmentIntensity = 1.0;
+        scene.environmentIntensity = 0.8;
 
         // Il grosso della luce viene dall'environment; le direzionali servono
         // solo a staccare i volumi in ombra (fill morbido + rim freddo).
@@ -293,7 +297,7 @@ export default function Car3D({
         loader.setMeshoptDecoder(MeshoptDecoder);
         // ?v=N: bump a ogni sostituzione del GLB (stesso nome file → il
         // browser/CDN servirebbero la versione vecchia dalla cache).
-        const gltf = await loader.loadAsync("/home/car3d/audi.glb?v=2");
+        const gltf = await loader.loadAsync("/home/car3d/audi.glb?v=3");
         if (disposed) return;
 
         carGroup = new THREE.Group();
@@ -308,19 +312,21 @@ export default function Car3D({
             const phys = new THREE.MeshPhysicalMaterial();
             THREE.MeshStandardMaterial.prototype.copy.call(phys, std);
             phys.clearcoat = 1.0;
-            phys.clearcoatRoughness = 0.16; // lucido ma morbido (mesh AI)
-            phys.roughness = 0.8; // scala la roughnessMap verso il lucido
-            // La metalnessMap AI marca mezzo cofano come metallo → effetto
-            // cromo sotto le strip. La vernice vera è dielettrica: base scura
-            // diffusa + riflessi dal SOLO clearcoat. Scala la mappa quasi a 0.
-            phys.metalness = 0.15;
-            phys.envMapIntensity = 0.9;
+            phys.clearcoatRoughness = 0.09;
+            // roughnessMap PURA (niente scala): è lei a differenziare vetro,
+            // vernice e plastiche — un valore piatto appiattisce i materiali
+            // e fa "giocattolo monomateriale".
+            phys.roughness = 1.0;
+            // Metalness moderata: ridà varietà a vetri/cromature senza
+            // l'effetto cromo del cofano (la mappa AI lì è sporca).
+            phys.metalness = 0.3;
+            phys.envMapIntensity = 0.95;
             // La ricostruzione AI lascia una normal map "bollosa": attenuarla
             // spiana i pannelli e rende i riflessi lunghi e puliti.
             phys.normalScale.setScalar(0.3);
             // La texture Meshy è più chiara del vero (ricostruita da frame
             // scuri): il moltiplicatore riporta tetto/vetri al nero profondo.
-            phys.color.setScalar(0.56);
+            phys.color.setScalar(0.5);
             // Fari e barra LED vivono nella emissiveMap, ma il GLB arriva con
             // emissiveFactor nero (default glTF) che la azzera: va sbloccato
             // a bianco perché contribuisca. (La mappa Meshy è comunque scura:
