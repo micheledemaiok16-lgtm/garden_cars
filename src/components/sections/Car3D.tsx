@@ -201,13 +201,58 @@ export default function Car3D({
     (async () => {
       try {
         const THREE = await import("three");
-        const [{ GLTFLoader }, { MeshoptDecoder }, { RoomEnvironment }] =
-          await Promise.all([
-            import("three/examples/jsm/loaders/GLTFLoader.js"),
-            import("three/examples/jsm/libs/meshopt_decoder.module.js"),
-            import("three/examples/jsm/environments/RoomEnvironment.js"),
-          ]);
+        const [{ GLTFLoader }, { MeshoptDecoder }] = await Promise.all([
+          import("three/examples/jsm/loaders/GLTFLoader.js"),
+          import("three/examples/jsm/libs/meshopt_decoder.module.js"),
+        ]);
         if (disposed) return;
+
+        // "Studio automotive" per i riflessi: stanza scura + softbox a striscia
+        // (una lunga sopra, una angolata dietro, una di riempimento davanti) e
+        // due quinte laterali fredde. Sono queste strisce a produrre gli
+        // highlight lunghi che scorrono sulla carrozzeria durante il giro —
+        // l'environment è fisso, l'auto ruota, come su una piattaforma vera.
+        const buildStudioEnv = () => {
+          const env = new THREE.Scene();
+          const room = new THREE.Mesh(
+            new THREE.BoxGeometry(24, 12, 24),
+            new THREE.MeshBasicMaterial({
+              color: 0x050505,
+              side: THREE.BackSide,
+            }),
+          );
+          room.position.y = 5;
+          env.add(room);
+          const strip = (
+            w: number,
+            h: number,
+            intensity: number,
+            pos: [number, number, number],
+            rx: number,
+            ry: number,
+            hex = 0xffffff,
+          ) => {
+            const m = new THREE.Mesh(
+              new THREE.PlaneGeometry(w, h),
+              new THREE.MeshBasicMaterial({
+                color: new THREE.Color(hex).multiplyScalar(intensity),
+                side: THREE.DoubleSide,
+              }),
+            );
+            m.position.set(...pos);
+            m.rotation.x = rx;
+            m.rotation.y = ry;
+            env.add(m);
+          };
+          strip(14, 1.5, 10, [0, 6, 0], Math.PI / 2, 0); // softbox principale
+          strip(12, 1, 4.5, [0, 5, -5], Math.PI / 3, 0); // striscia posteriore
+          strip(10, 0.8, 3, [0, 4, 5.5], -Math.PI / 2.7, 0); // fill frontale
+          strip(7, 3.5, 1.6, [-9, 2.6, 0], 0, Math.PI / 2, 0xcfdcff); // quinta sx
+          strip(7, 3.5, 1.6, [9, 2.6, 0], 0, -Math.PI / 2, 0xcfdcff); // quinta dx
+          strip(8, 3, 1.4, [0, 2.5, -9], 0, 0, 0xcfdcff); // fondale dietro
+          strip(8, 3, 1.1, [0, 2.5, 9], 0, Math.PI, 0xcfdcff); // fondale davanti
+          return env;
+        };
 
         renderer = new THREE.WebGLRenderer({
           canvas,
@@ -225,29 +270,36 @@ export default function Car3D({
         camera.position.set(...CAM_POS);
         camera.lookAt(...CAM_TARGET);
 
-        // Riflessi da "studio" senza HDR esterni; il fondo resta trasparente
-        // (nero della sezione). Un filo di key/rim per staccare i volumi.
+        // PMREM dell'ambiente studio, sigma minimo → riflessi nitidi sulla
+        // vernice. Il fondo del canvas resta trasparente (nero della sezione).
+        // Sigma non minimo: riflessi un filo morbidi — su una mesh ricostruita
+        // dall'AI gli specular troppo nitidi rivelano ogni grinza dei pannelli.
         const pmrem = new THREE.PMREMGenerator(renderer);
-        pmremTexture = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+        pmremTexture = pmrem.fromScene(buildStudioEnv(), 0.09).texture;
         pmrem.dispose();
         scene.environment = pmremTexture;
-        scene.environmentIntensity = 0.55;
+        scene.environmentIntensity = 1.0;
 
-        const key = new THREE.DirectionalLight(0xffffff, 0.3);
+        // Il grosso della luce viene dall'environment; le direzionali servono
+        // solo a staccare i volumi in ombra (fill morbido + rim freddo).
+        const key = new THREE.DirectionalLight(0xffffff, 0.18);
         key.position.set(2.5, 3.2, 2.2);
         scene.add(key);
-        const rim = new THREE.DirectionalLight(0xdfe8ff, 0.22);
+        const rim = new THREE.DirectionalLight(0xdfe8ff, 0.15);
         rim.position.set(-2.8, 2.2, -2.6);
         scene.add(rim);
 
         const loader = new GLTFLoader();
         loader.setMeshoptDecoder(MeshoptDecoder);
-        const gltf = await loader.loadAsync("/home/car3d/audi.glb");
+        // ?v=N: bump a ogni sostituzione del GLB (stesso nome file → il
+        // browser/CDN servirebbero la versione vecchia dalla cache).
+        const gltf = await loader.loadAsync("/home/car3d/audi.glb?v=2");
         if (disposed) return;
 
         carGroup = new THREE.Group();
-        // La vernice nera "appena lucidata": clearcoat sul materiale PBR di
-        // Meshy (mappe conservate). Un solo mesh/materiale per tutta l'auto.
+        // La vernice "appena lucidata": clearcoat quasi a specchio sopra il
+        // PBR di Meshy (mappe conservate). Un solo mesh/materiale per tutta
+        // l'auto, quindi le regolazioni sono globali.
         gltf.scene.traverse((obj) => {
           const mesh = obj as ThreeNS.Mesh;
           if (!mesh.isMesh) return;
@@ -255,12 +307,26 @@ export default function Car3D({
           if (std && (std as Partial<ThreeNS.MeshStandardMaterial>).isMeshStandardMaterial) {
             const phys = new THREE.MeshPhysicalMaterial();
             THREE.MeshStandardMaterial.prototype.copy.call(phys, std);
-            phys.clearcoat = 0.35;
-            phys.clearcoatRoughness = 0.18;
-            phys.envMapIntensity = 0.85;
+            phys.clearcoat = 1.0;
+            phys.clearcoatRoughness = 0.16; // lucido ma morbido (mesh AI)
+            phys.roughness = 0.8; // scala la roughnessMap verso il lucido
+            // La metalnessMap AI marca mezzo cofano come metallo → effetto
+            // cromo sotto le strip. La vernice vera è dielettrica: base scura
+            // diffusa + riflessi dal SOLO clearcoat. Scala la mappa quasi a 0.
+            phys.metalness = 0.15;
+            phys.envMapIntensity = 0.9;
+            // La ricostruzione AI lascia una normal map "bollosa": attenuarla
+            // spiana i pannelli e rende i riflessi lunghi e puliti.
+            phys.normalScale.setScalar(0.3);
             // La texture Meshy è più chiara del vero (ricostruita da frame
-            // scuri): il moltiplicatore riporta tetto/vetri al nero originale.
-            phys.color.setScalar(0.6);
+            // scuri): il moltiplicatore riporta tetto/vetri al nero profondo.
+            phys.color.setScalar(0.56);
+            // Fari e barra LED vivono nella emissiveMap, ma il GLB arriva con
+            // emissiveFactor nero (default glTF) che la azzera: va sbloccato
+            // a bianco perché contribuisca. (La mappa Meshy è comunque scura:
+            // le luci restano soffuse, coerenti con l'auto "parcheggiata".)
+            phys.emissive.setScalar(1);
+            phys.emissiveIntensity = 1.5;
             mesh.material = phys;
             std.dispose();
           }

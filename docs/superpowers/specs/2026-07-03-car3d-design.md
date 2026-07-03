@@ -50,6 +50,32 @@ resta solo in locale (ignorato da git), rigenerabile dal job sopra.
 - **Performance**: dpr max 2, pausa fuori viewport (IntersectionObserver),
   dispose completo on unmount, un solo rAF loop.
 
+## Passata di realismo (stesso giorno)
+
+La prima resa tradiva il modello AI: superfici "accartocciate" (grinze nei
+vertici della ricostruzione), cofano effetto cromo (metalnessMap sporca),
+tetto grigio, illuminazione generica. Interventi, in ordine di leva:
+
+1. **Smoothing geometria** (`tools/smooth-glb.mjs`): Taubin λ=0.5/μ=-0.53,
+   5 iterazioni, sul grafo dei vertici raggruppati per posizione (i vertici
+   sono splittati sulle cuciture UV: mossi indipendenti aprirebbero crepe),
+   normali smooth ricalcolate per gruppo pesate sull'area. Pipeline:
+   `audi-raw.glb → smooth-glb.mjs → audi-smooth.glb → gltf-transform
+   optimize → audi.glb` (+ bump `?v=` nel loader).
+2. **Environment "studio automotive"** al posto di RoomEnvironment: stanza
+   scura + softbox a striscia (principale sopra, posteriore angolata, fill
+   frontale, quinte e fondali freddi) → gli highlight lunghi che scorrono
+   sui pannelli durante il giro. PMREM sigma 0.09: su una mesh AI i riflessi
+   troppo nitidi rivelano ogni difetto residuo.
+3. **Materiale**: metalness scalata a 0.15 (la vernice è dielettrica: base
+   scura + riflessi dal solo clearcoat 1.0/roughness 0.16), normalScale 0.3,
+   color ×0.56, emissive sbloccata (il glTF arriva con emissiveFactor nero
+   che azzererebbe la emissiveMap).
+
+Le texture del grezzo sono già 2048px (max Meshy): nessun upgrade possibile
+lì. Limite residuo = geometria fine (razze cerchi, cornici vetri); il passo
+successivo sarebbe rigenerare il GLB con input schiariti (~30 crediti).
+
 ## Rischi / rollback
 
 - La qualità del GLB generato va validata a schermo (screenshot vs frame
