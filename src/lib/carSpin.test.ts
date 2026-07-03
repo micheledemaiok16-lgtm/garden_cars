@@ -1,15 +1,26 @@
 import { describe, it, expect } from "vitest";
-import { SPIN, normalizeFrame, frameIndex, resolveSpot } from "./carSpin";
+import {
+  SPIN,
+  SPIN_ASSET_VERSION,
+  normalizeFrame,
+  frameIndex,
+  resolveSpot,
+  frameDistance,
+} from "./carSpin";
 
 describe("SPIN config", () => {
-  it("ha 144 frame e arco 360 non-wrap", () => {
+  it("ha 144 frame e arco 360 con wrap (loop vero)", () => {
     expect(SPIN.frameCount).toBe(144);
     expect(SPIN.arcDegrees).toBe(360);
-    expect(SPIN.wrap).toBe(false);
+    expect(SPIN.wrap).toBe(true);
   });
-  it("srcFor pad a 3 cifre", () => {
-    expect(SPIN.srcFor(0)).toBe("/home/spin/frame-000.webp");
-    expect(SPIN.srcFor(143)).toBe("/home/spin/frame-143.webp");
+  it("srcFor pad a 3 cifre e versiona gli asset", () => {
+    expect(SPIN.srcFor(0)).toBe(
+      `/home/spin/frame-000.webp?v=${SPIN_ASSET_VERSION}`,
+    );
+    expect(SPIN.srcFor(143)).toBe(
+      `/home/spin/frame-143.webp?v=${SPIN_ASSET_VERSION}`,
+    );
   });
 });
 
@@ -51,5 +62,19 @@ describe("resolveSpot", () => {
   it("usa gli estremi fuori range", () => {
     expect(resolveSpot(samples, -5).x).toBeCloseTo(10);
     expect(resolveSpot(samples, 99).opacity).toBeCloseTo(0);
+  });
+});
+
+describe("frameDistance", () => {
+  it("distanza semplice senza wrap", () => {
+    expect(frameDistance(0, 5, 144, false)).toBe(5);
+    expect(frameDistance(5, 0, 144, false)).toBe(-5);
+  });
+  it("prende il percorso più corto attraverso la giunzione (wrap)", () => {
+    expect(frameDistance(143, 1, 144, true)).toBe(2);
+    expect(frameDistance(1, 143, 144, true)).toBe(-2);
+  });
+  it("frame identici → 0", () => {
+    expect(frameDistance(30, 30, 144, true)).toBe(0);
   });
 });

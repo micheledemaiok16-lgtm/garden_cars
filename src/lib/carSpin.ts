@@ -7,13 +7,21 @@
  * a 360° basta rigenerare più fotogrammi (alzare frameCount), mettere wrap=true
  * e aggiungere campioni ai pallini. Il resto del codice non cambia.
  */
+// Versione degli asset dello spin (video, poster e fotogrammi WebP condividono
+// lo stesso nome file a ogni rigenerazione): alzarla di 1 quando si
+// sostituiscono i file in public/home/spin, così browser e CDN non servono
+// le versioni vecchie dalla cache.
+export const SPIN_ASSET_VERSION = 2;
+
 export const SPIN = {
   frameCount: 144,
   arcDegrees: 360,
-  // Il giro generato copre ~340° e non si richiude perfettamente: teniamo il
-  // ping-pong (wrap:false) per evitare uno "scatto" sulla giunzione finale.
-  wrap: false,
-  srcFor: (i: number) => `/home/spin/frame-${String(i).padStart(3, "0")}.webp`,
+  // Il giro è un loop 360° vero: la sorgente parte e finisce sullo stesso
+  // fotogramma (start=end), quindi si richiude senza "scatto". wrap:true →
+  // rotazione continua e infinita in entrambi i sensi.
+  wrap: true,
+  srcFor: (i: number) =>
+    `/home/spin/frame-${String(i).padStart(3, "0")}.webp?v=${SPIN_ASSET_VERSION}`,
 };
 
 /** Riporta un frame (anche frazionario) nel range valido: clamp o wrap. */
@@ -33,6 +41,23 @@ export function frameIndex(
   wrap: boolean = SPIN.wrap,
 ): number {
   return Math.round(normalizeFrame(frame, count, wrap)) % count;
+}
+
+/**
+ * Distanza minima (con segno) tra due fotogrammi su un giro. Con wrap sceglie il
+ * percorso più corto (anche attraverso la giunzione FC-1→0): il segno indica il
+ * verso, |risultato| il numero di passi. Usata per capire quando la rotazione ha
+ * raggiunto un'ancora.
+ */
+export function frameDistance(
+  from: number,
+  to: number,
+  count: number = SPIN.frameCount,
+  wrap: boolean = SPIN.wrap,
+): number {
+  if (!wrap) return to - from;
+  const raw = (((to - from) % count) + count) % count; // 0..count
+  return raw > count / 2 ? raw - count : raw;
 }
 
 export type SpotSample = { frame: number; x: number; y: number; visible: boolean };
