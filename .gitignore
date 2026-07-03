@@ -43,3 +43,6 @@ next-env.d.ts
 # screenshots / playwright
 *.jpeg
 .playwright-mcp/
+
+# 3D: GLB grezzo Meshy (16MB, rigenerabile; in produzione va solo audi.glb)
+/public/home/car3d/audi-raw.glb
