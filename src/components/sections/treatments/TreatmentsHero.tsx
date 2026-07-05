@@ -59,40 +59,6 @@ export function TreatmentsHero() {
       {/* Glow racing green */}
       <div className="glow-racing pointer-events-none absolute -right-40 top-1/3 -z-10 h-[40rem] w-[40rem] opacity-40 blur-3xl" />
 
-      {/* Freccia "Indietro": torna alla home. In alto a sinistra, sotto la
-          navbar, allineata col menu dei trattamenti. */}
-      <motion.div
-        initial={{ opacity: 0, x: -16 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.7, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className="absolute left-[6%] top-28 z-20 md:top-32"
-      >
-        <Link
-          href="/"
-          aria-label="Torna alla home"
-          className="group flex items-center gap-2.5 text-paper/75 transition-colors hover:text-racing-bright"
-        >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full ring-1 ring-paper/25 transition-colors group-hover:ring-racing-bright">
-            <svg
-              viewBox="0 0 24 24"
-              aria-hidden
-              className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-0.5"
-            >
-              <path
-                d="M15 5l-7 7 7 7"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-          <span className="font-display text-sm font-semibold uppercase tracking-widest">
-            Indietro
-          </span>
-        </Link>
-      </motion.div>
 
       {/* Menu laterale dei trattamenti: link diretti alle sezioni della pagina.
           Solo da lg in su (su mobile si usa il menu "Trattamenti" della navbar). */}

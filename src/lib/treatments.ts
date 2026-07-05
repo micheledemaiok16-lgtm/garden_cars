@@ -45,8 +45,8 @@ export interface Treatment {
   features: string[];
   /** Media principale; `null` mostra un placeholder elegante (video in arrivo). */
   media: ServiceMedia | null;
-  /** Collage di 3 immagini (ha precedenza su `media`): tile alto + 2 impilate. */
-  gallery?: { src: string; alt: string }[];
+  /** Collage di 3 o 4 immagini (ha precedenza su `media`). */
+  gallery?: { src: string; alt: string; type?: "image" | "video"; caption?: string }[];
   /** Micro-interazione dedicata. */
   anim: ServiceAnim;
   /** Statistiche animate (solo `counter`). */
@@ -84,8 +84,9 @@ export const treatments: readonly Treatment[] = [
         alt: "Campionario di pelli in diversi colori e grane",
       },
       {
-        src: `${RP}/pelle-sedile.webp`,
-        alt: "Sedile in pelle cognac rigenerato con cuciture a contrasto",
+        src: `${RP}/videospruzzo.mp4`,
+        alt: "Restauro sedile auto con spruzzo",
+        type: "video"
       },
     ],
     anim: "mask",
@@ -143,11 +144,29 @@ export const treatments: readonly Treatment[] = [
       "Oscuramento fari",
       "Wrapping",
     ],
-    media: {
-      type: "image",
-      src: `${V}/pellicola-ppf.png`,
-      alt: "Pellicola PPF trasparente che protegge il faro di un'auto sportiva",
-    },
+    media: null,
+    gallery: [
+      {
+        src: `${V}/oscuramento-50-v3.webp`,
+        alt: "Finestrino anteriore con oscuramento 50%",
+        caption: "50%",
+      },
+      {
+        src: `${V}/oscuramento-65-v3.webp`,
+        alt: "Finestrino anteriore con oscuramento 65%",
+        caption: "65%",
+      },
+      {
+        src: `${V}/oscuramento-85-v3.webp`,
+        alt: "Finestrino anteriore con oscuramento 85%",
+        caption: "85%",
+      },
+      {
+        src: `${V}/oscuramento-95-v3.webp`,
+        alt: "Finestrino anteriore con oscuramento 95%",
+        caption: "95%",
+      },
+    ],
     anim: "parallax",
   },
   {
@@ -164,7 +183,7 @@ export const treatments: readonly Treatment[] = [
     ],
     media: {
       type: "image",
-      src: `${C}/centralina.png`,
+      src: `${C}/centralina_nuova.png`,
       alt: "Centralina elettronica per la rimappatura del motore",
     },
     anim: "counter",

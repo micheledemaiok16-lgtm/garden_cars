@@ -354,7 +354,7 @@ function ServiceMedia({
             alt={media.alt}
             fill
             sizes="(max-width: 1024px) 100vw, 50vw"
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+            className="scale-[1.04] object-cover object-[60%_center] transition-transform duration-700 ease-out group-hover:scale-[1.09]"
           />
           <MasterTuningBadge />
         </>
@@ -535,42 +535,91 @@ function SmerigliatriceDecor({ reduce }: { reduce: boolean | null }) {
   );
 }
 
-/** Collage a 3 immagini: tile alto a sinistra + due impilate a destra. */
-function Collage({ images }: { images: { src: string; alt: string }[] }) {
-  const [a, b, c] = images;
+/** Collage a 3, 4 o 5 immagini. */
+function Collage({ images }: { images: { src: string; alt: string; type?: "image" | "video"; caption?: string }[] }) {
   const tile =
     "group/tile relative overflow-hidden rounded-2xl ring-1 ring-white/10";
-  const img =
+  const mediaClass =
     "object-cover transition-transform duration-700 ease-out group-hover/tile:scale-105";
+  
+  const renderMedia = (item: { src: string; alt: string; type?: "image" | "video"; caption?: string }) => {
+    return (
+      <>
+        {item.type === "video" ? (
+          <video
+            className={cn(mediaClass, "h-full w-full")}
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-label={item.alt}
+          >
+            <source src={item.src} type="video/mp4" />
+          </video>
+        ) : (
+          <Image
+            src={item.src}
+            alt={item.alt}
+            fill
+            sizes="(max-width: 1024px) 50vw, 25vw"
+            className={mediaClass}
+          />
+        )}
+        {item.caption && (
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/90 to-transparent p-2 sm:p-3">
+            <span className="font-display text-sm font-bold text-white drop-shadow-md sm:text-base">
+              {item.caption}
+            </span>
+          </div>
+        )}
+      </>
+    );
+  };
+
+  if (images.length === 5) {
+    const [main, ...crops] = images;
+    return (
+      <div className="group/main relative h-full w-full overflow-hidden rounded-2xl ring-1 ring-white/10">
+        <div className="absolute inset-0 z-0">
+          <Image
+            src={main.src}
+            alt={main.alt}
+            fill
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            className="object-cover transition-transform duration-700 ease-out group-hover/main:scale-105"
+          />
+        </div>
+        
+        {/* Floating 4-grid in top-left */}
+        <div className="absolute left-3 top-3 z-10 w-[55%] max-w-[240px] grid grid-cols-2 grid-rows-2 gap-1.5 rounded-xl bg-ink/40 p-1.5 backdrop-blur-md ring-1 ring-white/20 shadow-2xl sm:left-6 sm:top-6 sm:w-[45%]">
+          {crops.map((img, i) => (
+            <div key={i} className="group/tile relative aspect-square overflow-hidden rounded-lg">
+              {renderMedia(img)}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (images.length === 4) {
+    return (
+      <div className="grid h-full w-full grid-cols-2 grid-rows-2 gap-2">
+        {images.map((img, i) => (
+          <div key={i} className={tile}>
+            {renderMedia(img)}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const [a, b, c] = images;
   return (
     <div className="grid h-full w-full grid-cols-2 grid-rows-2 gap-2">
-      <div className={cn(tile, "row-span-2")}>
-        <Image
-          src={a.src}
-          alt={a.alt}
-          fill
-          sizes="(max-width: 1024px) 50vw, 25vw"
-          className={img}
-        />
-      </div>
-      <div className={tile}>
-        <Image
-          src={b.src}
-          alt={b.alt}
-          fill
-          sizes="(max-width: 1024px) 50vw, 25vw"
-          className={img}
-        />
-      </div>
-      <div className={tile}>
-        <Image
-          src={c.src}
-          alt={c.alt}
-          fill
-          sizes="(max-width: 1024px) 50vw, 25vw"
-          className={img}
-        />
-      </div>
+      <div className={cn(tile, "row-span-2")}>{renderMedia(a)}</div>
+      <div className={tile}>{renderMedia(b)}</div>
+      <div className={tile}>{renderMedia(c)}</div>
     </div>
   );
 }

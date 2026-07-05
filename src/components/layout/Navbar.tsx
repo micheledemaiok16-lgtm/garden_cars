@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { nav, site, isMenu, type NavItem } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ export default function Navbar() {
   // Voce del menu mobile attualmente espansa (accordion)
   const [mobileSub, setMobileSub] = useState<string | null>(null);
   const reduce = useReducedMotion();
+  const pathname = usePathname();
 
   useEffect(() => {
     let last = window.scrollY;
@@ -67,14 +69,43 @@ export default function Navbar() {
         )}
       >
         <nav className="wrap flex h-[72px] items-center justify-between">
-          <Link href="/#top" className="flex items-center gap-3" aria-label="Garden Cars, home">
-            <span className="relative h-10 w-10 overflow-hidden rounded-full ring-1 ring-white/20">
-              <Image src="/brand/logo.jpg" alt="Garden Cars" fill sizes="40px" className="object-cover" />
-            </span>
-            <span className="font-logo -skew-x-6 whitespace-nowrap text-base font-normal tracking-tight text-paper">
-              GARDEN&apos;S <span className="text-racing-bright">CARS</span>
-            </span>
-          </Link>
+          <div className="flex items-center gap-4 lg:gap-6">
+            {pathname === "/trattamenti" && (
+              <Link
+                href="/"
+                aria-label="Torna alla home"
+                className="group -ml-2 flex items-center gap-2.5 rounded-full border border-white/20 bg-white/5 py-1.5 pl-2 pr-4 text-paper transition-all hover:border-racing-bright hover:bg-white/10 hover:text-racing-bright md:-ml-4"
+              >
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 transition-colors group-hover:bg-racing-bright/20">
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden
+                    className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5"
+                  >
+                    <path
+                      d="M15 5l-7 7 7 7"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+                <span className="hidden font-display text-xs font-semibold uppercase tracking-widest sm:block">
+                  Indietro
+                </span>
+              </Link>
+            )}
+            <Link href="/#top" className="flex items-center gap-3" aria-label="Garden Cars, home">
+              <span className="relative h-10 w-10 overflow-hidden rounded-full ring-1 ring-white/20">
+                <Image src="/brand/logo.jpg" alt="Garden Cars" fill sizes="40px" className="object-cover" />
+              </span>
+              <span className="font-logo -skew-x-6 whitespace-nowrap text-base font-normal tracking-tight text-paper hidden sm:inline">
+                GARDEN&apos;S <span className="text-racing-bright">CARS</span>
+              </span>
+            </Link>
+          </div>
 
           <ul className="hidden items-center gap-8 lg:flex xl:gap-12">
             {nav.map((item) => (
