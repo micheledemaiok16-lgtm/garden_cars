@@ -70,3 +70,18 @@ drag) → dissolvenza via, lo spin riprende.
 
 `npx tsc --noEmit`, `npm run lint`, `npx vitest run` verdi; prova visiva su
 dev server (apertura, hold, 3 vie di chiusura, nessun errore console proprio).
+
+## Addendum (stesso giorno, approvato a voce durante il collaudo)
+
+- **Ritmo per-reveal:** `openMs`/`closeMs` in config = scrub LINEARE a tempo
+  (ritmo costante, "video a N×"); assenti → ease-out esponenziale legacy
+  (0.14/0.16, tarato sullo sportello). Centraline: apertura 4× (1260ms),
+  chiusura 4.5× (1120ms) — tarate dall'utente per tentativi.
+- **Reveal "Vetri" (`trattamento-vetri`, ancora 126 = fiancata sx):** clip
+  seedance gemello (job `947aefa4`, 12,5cr, stessa pipeline; camera quasi
+  ferma, i vetri si oscurano da semi-trasparenti a tinta nera piena) → 61 WebP
+  in `public/home/vetri-reveal/`. Novità: **`loop: true`** = da aperto
+  l'effetto va in ping-pong (0→1, pausa `loopHoldMs`, 1→0, pausa, ripete),
+  per mostrare la trasformazione più volte; chiusura = solito reverse dal
+  punto corrente. Vetri: openMs 2520 (2×), closeMs 1260, hold 1100ms.
+- Crediti Higgsfield dopo i due clip: 7,5.

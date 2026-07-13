@@ -7,9 +7,11 @@ import { Reveal } from "@/components/ui/Reveal";
 import { treatments, type Treatment } from "@/lib/treatments";
 import { carSpots, type TreatmentId } from "@/lib/carSpots";
 import { frameDistance } from "@/lib/carSpin";
-import { getReveal } from "@/lib/carReveal";
+import { getReveal, reveals } from "@/lib/carReveal";
 import { cn } from "@/lib/utils";
-import Car3D from "./Car3D";
+// TEMP: Car360 (video+WebP) al posto di Car3D per valutare la rigenerazione
+// degli asset — vedi Car3D per lo stage 3D. Ripristinare Car3D a valutazione fatta.
+import Car360 from "./Car360";
 import CarDoorReveal from "./CarDoorReveal";
 
 function treatmentById(id: string): Treatment {
@@ -29,19 +31,17 @@ const INITIAL = carSpots.find((s) => s.id === "lucidatura") ?? carSpots[0];
  */
 export default function CarExplorer() {
   const reduce = useReducedMotion();
-  const REVEAL_ID: TreatmentId = "restauro-pelle";
-  const revealAnchor = getReveal(REVEAL_ID)?.anchorFrame ?? INITIAL.anchorFrame;
 
   // `targetFrame` = angolo verso cui l'auto ruota dolcemente (null = riposo /
-  // auto-rotazione). `doorOpen` pilota l'overlay "Interni" (apertura sportello);
-  // `doorInstant` = chiusura secca (drag). `armingRef` = in rotazione verso
-  // l'ancora dopo il click "Interni": apri all'arrivo.
+  // auto-rotazione). `openId` = reveal attualmente aperto (null = nessuno);
+  // `doorInstant` = chiusura secca (drag). `armingRef` = reveal in attesa che
+  // la rotazione raggiunga la sua ancora: apri all'arrivo.
   const [targetFrame, setTargetFrame] = useState<number | null>(null);
   const [activeId, setActiveId] = useState<string>(INITIAL.id);
   const [touched, setTouched] = useState(false);
-  const [doorOpen, setDoorOpen] = useState(false);
+  const [openId, setOpenId] = useState<TreatmentId | null>(null);
   const [doorInstant, setDoorInstant] = useState(false);
-  const armingRef = useRef(false);
+  const armingRef = useRef<TreatmentId | null>(null);
   const currentFrameRef = useRef<number>(INITIAL.anchorFrame);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const navRef = useRef<HTMLUListElement | null>(null);
@@ -49,72 +49,84 @@ export default function CarExplorer() {
   const active = treatmentById(activeId);
 
   // hover/focus su una voce: evidenzia il servizio e ruota all'angolo. Non
-  // chiude la porta (la chiusura avviene solo su click/drag/click-fuori).
+  // chiude il reveal (la chiusura avviene solo su click/drag/click-fuori).
   const preview = (id: string) => {
     setActiveId(id);
-    if (doorOpen && id !== REVEAL_ID) return; // porta aperta: niente rotazione in hover
+    if (openId && id !== openId) return; // reveal aperto: niente rotazione in hover
     const spot = carSpots.find((s) => s.id === id);
     if (spot) setTargetFrame(spot.anchorFrame);
     setTouched(true);
   };
   const endPreview = () => {
-    if (doorOpen || armingRef.current) return; // resta ancorato mentre è aperta/in apertura
+    if (openId || armingRef.current) return; // resta ancorato mentre è aperto/in apertura
     setTargetFrame(null);
   };
 
-  // Chiusura della porta: graceful (reverse dello scrub) o instant (drag).
+  // Chiusura del reveal: graceful (reverse dello scrub) o instant (drag).
   const requestClose = (mode: "graceful" | "instant") => {
-    armingRef.current = false;
+    armingRef.current = null;
     setDoorInstant(mode === "instant");
-    setDoorOpen(false); // targetFrame resta su revealAnchor finché onDoorClosed non ripristina
+    setOpenId(null); // targetFrame resta sull'ancora finché onDoorClosed non ripristina
   };
   const onDoorClosed = () => {
     setDoorInstant(false);
+    // Switch diretto tra reveal (es. Interni→Motore): quando il vecchio finisce
+    // di chiudersi il nuovo è già aperto/armato — la SUA ancora deve restare.
+    if (openId !== null || armingRef.current) return;
     setTargetFrame(null); // riprende l'auto-rotazione dall'ancora
   };
 
-  // CLICK su "Interni": ruota all'ancora e poi apri; se già aperta, richiudi.
-  const activateReveal = (id: string) => {
+  // CLICK su una voce con reveal: ruota all'ancora e poi apri; se già aperto,
+  // richiudi. Se era aperto un ALTRO reveal, si richiude da sé (open → false).
+  const activateReveal = (id: TreatmentId) => {
     setActiveId(id);
     setTouched(true);
-    if (doorOpen) {
+    const reveal = getReveal(id);
+    if (!reveal) return;
+    if (openId === id) {
       requestClose("graceful");
       return;
     }
     setDoorInstant(false);
-    setTargetFrame(revealAnchor);
+    setTargetFrame(reveal.anchorFrame);
     // Se l'auto è GIÀ all'ancora (tipico: ci è arrivata con l'hover-preview e si
     // è parcheggiata), apri subito: handleFrame non scatterebbe perché il
     // fotogramma non cambia più. Altrimenti arma e apri quando la rotazione
     // raggiunge l'ancora.
-    if (Math.abs(frameDistance(currentFrameRef.current, revealAnchor)) < 1.5) {
-      setDoorOpen(true);
+    if (Math.abs(frameDistance(currentFrameRef.current, reveal.anchorFrame)) < 1.5) {
+      armingRef.current = null;
+      setOpenId(id);
     } else {
-      armingRef.current = true;
+      armingRef.current = id;
+      if (openId !== null) setOpenId(null);
     }
   };
 
   // L'utente affronta l'auto (drag/press): chiudi subito e passa al trascinamento.
   const handleGrab = () => {
-    if (doorOpen || armingRef.current) requestClose("instant");
-    armingRef.current = false;
+    if (openId !== null || armingRef.current) requestClose("instant");
+    armingRef.current = null;
     setTargetFrame(null);
     setTouched(true);
   };
 
-  // Frame report dallo spin: quando la rotazione raggiunge l'ancora, apri la
-  // porta. Non salva il fotogramma (nessun consumatore → niente re-render 60/s).
+  // Frame report dallo spin: quando la rotazione raggiunge l'ancora del reveal
+  // armato, aprilo. Non salva il fotogramma (nessun consumatore → niente
+  // re-render 60/s).
   const handleFrame = (f: number) => {
     currentFrameRef.current = f;
-    if (armingRef.current && Math.abs(frameDistance(f, revealAnchor)) < 1.5) {
-      armingRef.current = false;
-      setDoorOpen(true);
+    const arming = armingRef.current;
+    if (!arming) return;
+    const anchor = getReveal(arming)?.anchorFrame;
+    if (anchor !== undefined && Math.abs(frameDistance(f, anchor)) < 1.5) {
+      armingRef.current = null;
+      setOpenId(arming);
     }
   };
 
   // "Clicca fuori" per chiudere: press fuori dal palco e fuori dalla nav.
   useEffect(() => {
-    if (!doorOpen) return;
+    if (openId === null) return;
     const onDown = (e: globalThis.PointerEvent) => {
       const t = e.target as Node;
       if (stageRef.current?.contains(t)) return; // press sull'auto: lo gestisce handleGrab
@@ -123,7 +135,7 @@ export default function CarExplorer() {
     };
     document.addEventListener("pointerdown", onDown, true);
     return () => document.removeEventListener("pointerdown", onDown, true);
-  }, [doorOpen]);
+  }, [openId]);
 
   return (
     // Fondo a nero puro (#000) dove sta l'auto → combacia col fondo dei
@@ -162,7 +174,7 @@ export default function CarExplorer() {
 
         <div className="mt-12 grid items-center gap-8 lg:mt-16 lg:grid-cols-[1.75fr_0.9fr] lg:gap-10">
           <div ref={stageRef}>
-            <Car3D
+            <Car360
               initialFrame={INITIAL.anchorFrame}
               targetFrame={targetFrame}
               reduce={reduce}
@@ -170,21 +182,26 @@ export default function CarExplorer() {
               onGrab={handleGrab}
               showHint={!touched}
             >
-              <CarDoorReveal
-                revealId={REVEAL_ID}
-                open={doorOpen}
-                instant={doorInstant}
-                reduce={reduce}
-                onClosed={onDoorClosed}
-              />
-            </Car3D>
+              {/* Un overlay per reveal, sempre montati: i frame restano
+                  precaricati e ognuno apre/chiude in autonomia (openId). */}
+              {reveals.map((r) => (
+                <CarDoorReveal
+                  key={r.id}
+                  revealId={r.id}
+                  open={openId === r.id}
+                  instant={doorInstant}
+                  reduce={reduce}
+                  onClosed={onDoorClosed}
+                />
+              ))}
+            </Car360>
           </div>
           <ServicePanel treatment={active} reduce={reduce} />
         </div>
 
         <ZoneNav
           activeId={activeId}
-          openId={doorOpen ? REVEAL_ID : null}
+          openId={openId}
           onPreview={preview}
           onEndPreview={endPreview}
           onActivate={activateReveal}
@@ -296,8 +313,8 @@ function ZoneNav({
     >
       {carSpots.map((spot) => {
         const isActive = spot.id === activeId;
-        // Le voci con un reveal (per ora "Interni") aprono l'animazione invece
-        // di navigare: sono <button>. Le altre restano link diretti.
+        // Le voci con un reveal ("Interni", "Motore") aprono l'animazione
+        // invece di navigare: sono <button>. Le altre restano link diretti.
         const hasReveal = !!getReveal(spot.id);
         const style = {
           borderColor: isActive

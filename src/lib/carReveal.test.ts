@@ -11,10 +11,16 @@ describe("getReveal", () => {
     const r = getReveal("restauro-pelle");
     expect(r).toBeTruthy();
     expect(r?.anchorFrame).toBe(4);
-    expect(r?.seatColor).toBe("cognac");
+    expect(r?.alt).toContain("cognac");
+  });
+  it("restituisce la config per centraline (cofano/motore)", () => {
+    const r = getReveal("centraline");
+    expect(r).toBeTruthy();
+    expect(r?.anchorFrame).toBe(18);
+    expect(r?.dir).toBe("/home/centralina-reveal");
   });
   it("undefined per servizi senza reveal", () => {
-    expect(getReveal("centraline")).toBeUndefined();
+    expect(getReveal("lucidatura")).toBeUndefined();
   });
 });
 

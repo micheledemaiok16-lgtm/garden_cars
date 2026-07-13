@@ -1,9 +1,10 @@
 /**
- * Config delle animazioni "reveal" per-servizio del CarExplorer. Per ora solo
- * "Interni" (restauro-pelle): apertura sportello guidatore + abitacolo nuovo.
- * L'apertura è una sequenza di fotogrammi WebP "scrubbata" da un tween (vedi
- * CarDoorReveal): il frame 0 coincide col frame-ancora dello spin (stesso
- * start_image), il frame finale mostra l'interno.
+ * Config delle animazioni "reveal" per-servizio del CarExplorer: "Interni"
+ * (apertura sportello guidatore + abitacolo nuovo) e "Motore" (cofano che si
+ * apre, vano motore dall'alto). L'apertura è una sequenza di fotogrammi WebP
+ * "scrubbata" da un tween (vedi CarDoorReveal): il frame 0 coincide col
+ * frame-ancora dello spin (stesso start_image), il frame finale mostra il
+ * soggetto rivelato.
  *
  * Questa mappa è il punto d'estensione: per aggiungere un reveal a un altro
  * servizio basta una nuova voce (e i relativi asset in public/home/<dir>).
@@ -25,11 +26,29 @@ export interface CarReveal {
   frameCount: number;
   /** Cartella pubblica dei frame (senza slash finale). */
   dir: string;
-  /** Colore/mood della pelle, usato anche per l'alt dell'immagine. */
-  seatColor: string;
+  /** Testo alternativo dell'immagine dell'overlay (stato aperto). */
+  alt: string;
+  /**
+   * Durata (ms) dello scrub di apertura/chiusura a RITMO COSTANTE, come una
+   * riproduzione video: preserva il movimento nativo del clip. Assenti →
+   * ease-out esponenziale di CarDoorReveal (0.14 / 0.16, tarato sullo
+   * sportello, che con la sua corsa breve regge il ritmo "scattante").
+   */
+  openMs?: number;
+  closeMs?: number;
+  /**
+   * true → da aperto l'effetto va in LOOP ping-pong: scrub 0→1, pausa,
+   * 1→0, pausa, e ricomincia (ritmo = openMs, obbligatorio col loop). Serve
+   * per gli effetti "di stato" (es. l'oscuramento vetri) dove vale la pena
+   * mostrare la trasformazione più volte. La chiusura resta il solito
+   * reverse (closeMs) dal punto in cui si trova.
+   */
+  loop?: boolean;
+  /** Pausa (ms) agli estremi del loop; default in CarDoorReveal. */
+  loopHoldMs?: number;
 }
 
-const REVEALS: readonly CarReveal[] = [
+export const reveals: readonly CarReveal[] = [
   {
     id: "restauro-pelle",
     anchorFrame: 4,
@@ -37,12 +56,41 @@ const REVEALS: readonly CarReveal[] = [
     // dissolvenza bordi verso #000 bakata (rampa 100/80/100).
     frameCount: 61,
     dir: "/home/interni-reveal",
-    seatColor: "cognac",
+    alt: "Abitacolo restaurato in pelle cognac: sedili e volante nuovi",
+  },
+  {
+    id: "centraline",
+    anchorFrame: 18,
+    // 61 fotogrammi estratti dal clip seedance del cofano (source 0..120,
+    // uno ogni 2), stessa dissolvenza bordi gentile di interni-reveal.
+    frameCount: 61,
+    dir: "/home/centralina-reveal",
+    alt: "Cofano aperto sul vano motore visto dall'alto: rimappatura della centralina",
+    // La corsa è lunga (push-in dal muso + cofano + salita sopra il vano):
+    // scrub a ritmo costante (sorgente 121f/24fps ≈ 5.04s). Apertura = video
+    // a 4× (1260ms), chiusura in reverse = video a 4.5× (1120ms).
+    openMs: 1260,
+    closeMs: 1120,
+  },
+  {
+    id: "trattamento-vetri",
+    anchorFrame: 126,
+    // 61 fotogrammi estratti dal clip seedance dell'oscuramento progressivo
+    // (fiancata sinistra, vetri da semi-trasparenti a tinta nera piena).
+    frameCount: 61,
+    dir: "/home/vetri-reveal",
+    alt: "Vetri laterali che si oscurano progressivamente fino alla tinta nera",
+    // Trasformazione di stato → loop ping-pong: oscura (2×) → pausa →
+    // schiarisce → pausa → ripete. Chiusura in reverse a 4×.
+    openMs: 2520,
+    closeMs: 1260,
+    loop: true,
+    loopHoldMs: 1100,
   },
 ];
 
 export function getReveal(id: string): CarReveal | undefined {
-  return REVEALS.find((r) => r.id === id);
+  return reveals.find((r) => r.id === id);
 }
 
 /** Path del fotogramma `i` dell'apertura (clampato), con cache-busting. */
@@ -58,7 +106,7 @@ export function revealProgressToFrame(progress: number, frameCount: number): num
 }
 
 // Guardie d'integrità a caricamento modulo (come carSpots.ts).
-for (const r of REVEALS) {
+for (const r of reveals) {
   if (!treatments.some((t) => t.id === r.id)) {
     throw new Error(`carReveal: id "${r.id}" non presente in treatments.ts`);
   }

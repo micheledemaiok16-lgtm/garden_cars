@@ -15,12 +15,17 @@ import {
 // riprende sotto). Il gate temporale evita che la porta si apra "dentro" la
 // dissolvenza (immagini sovrapposte torbide).
 const FADE_MS = 300;
+// Ritmo di default del tween, ease-out esponenziale (tarato sull'apertura
+// sportello). I reveal con corse di camera lunghe impostano openMs/closeMs in
+// config → scrub LINEARE a tempo (ritmo costante, come riprodurre il video).
 const OPEN_K = 0.14; // ease-out apertura
 const CLOSE_K = 0.16; // chiusura un filo più rapida
+const LOOP_HOLD_MS = 1000; // pausa di default agli estremi del loop ping-pong
 
 /**
- * Overlay dell'apertura sportello (servizio "Interni"). Sta SOPRA lo spin nel
- * box di Car360 (stesso object-contain) e mostra una sequenza WebP "scrubbata"
+ * Overlay di un reveal per-servizio (sportello per "Interni", cofano per
+ * "Motore"). Sta SOPRA lo spin nel box dello stage (stesso object-contain) e
+ * mostra una sequenza WebP "scrubbata"
  * da un tween: apertura = progress 0→1, chiusura = reverse 1→0. Nessun seek
  * video: solo swap di <img> (istantaneo). Manipolazione diretta del DOM per non
  * ri-renderizzare a ogni frame.
@@ -46,6 +51,9 @@ export default function CarDoorReveal({
   const reduceRef = useRef(!!reduce);
   const shownRef = useRef(false); // overlay attualmente visibile (opacity 1)
   const fadeStartRef = useRef(0); // istante d'inizio della dissolvenza in ingresso
+  const lastTickRef = useRef(0); // timestamp del tick precedente (per il dt)
+  const loopDirRef = useRef<1 | -1>(1); // verso corrente del loop ping-pong
+  const loopHoldUntilRef = useRef(0); // fine della pausa agli estremi del loop
   const lastIdxRef = useRef(-1);
   const closedNotifiedRef = useRef(true); // niente notifica spuria al mount
   const onClosedRef = useRef(onClosed);
@@ -54,7 +62,12 @@ export default function CarDoorReveal({
   // Tieni i ref allineati alle prop senza far ripartire il loop rAF.
   useEffect(() => {
     openRef.current = open;
-    if (open) closedNotifiedRef.current = false;
+    if (open) {
+      closedNotifiedRef.current = false;
+      // Ogni apertura fa ripartire l'eventuale loop dall'andata, senza pausa.
+      loopDirRef.current = 1;
+      loopHoldUntilRef.current = 0;
+    }
   }, [open]);
   useEffect(() => {
     instantRef.current = instant;
@@ -92,6 +105,10 @@ export default function CarDoorReveal({
       const img = imgRef.current;
       if (img) {
         const now = performance.now();
+        // dt clampato: dopo un tab nascosto/riattivato lo scrub a tempo non
+        // deve "saltare" in avanti di secondi in un tick solo.
+        const dt = Math.min(now - (lastTickRef.current || now), 100);
+        lastTickRef.current = now;
         const isOpen = openRef.current;
         const reduceNow = reduceRef.current;
         const instantNow = instantRef.current;
@@ -113,13 +130,38 @@ export default function CarDoorReveal({
           // apri solo dopo che la dissolvenza in ingresso è completa
           if (now - fadeStartRef.current >= FADE_MS) {
             const p = progressRef.current;
-            const next = p + (1 - p) * OPEN_K;
-            progressRef.current = Math.abs(1 - next) < 0.004 ? 1 : next;
+            if (reveal.loop && reveal.openMs) {
+              // Loop ping-pong: 0→1, pausa, 1→0, pausa, e ricomincia.
+              if (now >= loopHoldUntilRef.current) {
+                const next = p + loopDirRef.current * (dt / reveal.openMs);
+                if (next >= 1) {
+                  progressRef.current = 1;
+                  loopDirRef.current = -1;
+                  loopHoldUntilRef.current =
+                    now + (reveal.loopHoldMs ?? LOOP_HOLD_MS);
+                } else if (next <= 0) {
+                  progressRef.current = 0;
+                  loopDirRef.current = 1;
+                  loopHoldUntilRef.current =
+                    now + (reveal.loopHoldMs ?? LOOP_HOLD_MS);
+                } else {
+                  progressRef.current = next;
+                }
+              }
+            } else {
+              // openMs → avanzamento lineare a tempo; altrimenti ease-out.
+              const next = reveal.openMs
+                ? Math.min(1, p + dt / reveal.openMs)
+                : p + (1 - p) * OPEN_K;
+              progressRef.current = 1 - next < 0.004 ? 1 : next;
+            }
           }
         } else {
           const p = progressRef.current;
-          const next = p + (0 - p) * CLOSE_K;
-          progressRef.current = Math.abs(next) < 0.004 ? 0 : next;
+          const next = reveal.closeMs
+            ? Math.max(0, p - dt / reveal.closeMs)
+            : p + (0 - p) * CLOSE_K;
+          progressRef.current = next < 0.004 ? 0 : next;
         }
 
         if (shownRef.current) {
@@ -150,7 +192,7 @@ export default function CarDoorReveal({
     <img
       ref={imgRef}
       src={revealFrameSrc(reveal, 0)}
-      alt={`Abitacolo restaurato in pelle ${reveal.seatColor}: sedili e volante nuovi`}
+      alt={reveal.alt}
       draggable={false}
       className="pointer-events-none absolute inset-0 z-30 h-full w-full object-contain"
       style={{ opacity: 0, transition: `opacity ${FADE_MS}ms ease` }}
