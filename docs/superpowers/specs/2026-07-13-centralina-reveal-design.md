@@ -85,3 +85,24 @@ dev server (apertura, hold, 3 vie di chiusura, nessun errore console proprio).
   per mostrare la trasformazione più volte; chiusura = solito reverse dal
   punto corrente. Vetri: openMs 2520 (2×), closeMs 1260, hold 1100ms.
 - Crediti Higgsfield dopo i due clip: 7,5.
+
+## Addendum 2 — reveal Carrozzeria + Detailing, no-hover, fix lampo drag
+
+- **Ricarica crediti → 107,5.** Altri due clip (12,5cr l'uno) completano tutti e 5
+  i servizi:
+  - **Carrozzeria** (`lucidatura`, ancora 136): lama di luce che scorre sulla
+    vernice, `loop` ping-pong (openMs 2520, hold 700). Job `9e1f9717`.
+  - **Detailing** (`car-detailing`, ancora 132): schiuma sulla ruota anteriore →
+    risciacquo → cerchio pulito. One-way (openMs 2965 = video 1.7×, closeMs 1260).
+    Job `c2de40ad`. Il clip reincornicia stretto sulla ruota → l'aggancio allo
+    spin è coperto dalla dissolvenza 300ms.
+  - Asset in `public/home/lucidatura-reveal/` e `public/home/detailing-reveal/`.
+- **Ritmi finali** (moltiplicatori sul video, scrub lineare): Interni 1.2×, Vetri
+  1.2× loop, Centraline 4×, Detailing 1.7×, Carrozzeria loop 2520ms.
+- **Attivazione SOLO al click:** rimossi hover-preview e i gestori mouse/focus
+  della ZoneNav — l'hover non ruota più l'auto né cambia pannello.
+- **Fix "lampo del vecchio frame" al rilascio del drag** (`Car360.tsx`): lo swap
+  img→video avveniva prima che il seek mp4 (lento) completasse → il video mostrava
+  il frame d'inizio drag. Ora l'img resta come ponte fino all'evento `seeked`
+  (timeout 400ms di sicurezza, annullo se riparte un drag). Verificato con
+  Playwright: campioni di lampo da 11+ → 0.

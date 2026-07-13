@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FocusEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Reveal } from "@/components/ui/Reveal";
@@ -48,20 +48,6 @@ export default function CarExplorer() {
 
   const active = treatmentById(activeId);
 
-  // hover/focus su una voce: evidenzia il servizio e ruota all'angolo. Non
-  // chiude il reveal (la chiusura avviene solo su click/drag/click-fuori).
-  const preview = (id: string) => {
-    setActiveId(id);
-    if (openId && id !== openId) return; // reveal aperto: niente rotazione in hover
-    const spot = carSpots.find((s) => s.id === id);
-    if (spot) setTargetFrame(spot.anchorFrame);
-    setTouched(true);
-  };
-  const endPreview = () => {
-    if (openId || armingRef.current) return; // resta ancorato mentre è aperto/in apertura
-    setTargetFrame(null);
-  };
-
   // Chiusura del reveal: graceful (reverse dello scrub) o instant (drag).
   const requestClose = (mode: "graceful" | "instant") => {
     armingRef.current = null;
@@ -76,8 +62,9 @@ export default function CarExplorer() {
     setTargetFrame(null); // riprende l'auto-rotazione dall'ancora
   };
 
-  // CLICK su una voce con reveal: ruota all'ancora e poi apri; se già aperto,
-  // richiudi. Se era aperto un ALTRO reveal, si richiude da sé (open → false).
+  // CLICK su una voce (unica via di attivazione: niente hover-preview): ruota
+  // all'ancora e poi apri; se già aperto, richiudi. Se era aperto un ALTRO
+  // reveal, si richiude da sé (open → false).
   const activateReveal = (id: TreatmentId) => {
     setActiveId(id);
     setTouched(true);
@@ -89,10 +76,9 @@ export default function CarExplorer() {
     }
     setDoorInstant(false);
     setTargetFrame(reveal.anchorFrame);
-    // Se l'auto è GIÀ all'ancora (tipico: ci è arrivata con l'hover-preview e si
-    // è parcheggiata), apri subito: handleFrame non scatterebbe perché il
-    // fotogramma non cambia più. Altrimenti arma e apri quando la rotazione
-    // raggiunge l'ancora.
+    // Se l'auto è GIÀ all'ancora, apri subito: handleFrame non scatterebbe
+    // perché il fotogramma non cambia più. Altrimenti arma e apri quando la
+    // rotazione raggiunge l'ancora.
     if (Math.abs(frameDistance(currentFrameRef.current, reveal.anchorFrame)) < 1.5) {
       armingRef.current = null;
       setOpenId(id);
@@ -202,8 +188,6 @@ export default function CarExplorer() {
         <ZoneNav
           activeId={activeId}
           openId={openId}
-          onPreview={preview}
-          onEndPreview={endPreview}
           onActivate={activateReveal}
           navRef={navRef}
         />
@@ -286,30 +270,18 @@ function ServicePanel({
 function ZoneNav({
   activeId,
   openId,
-  onPreview,
-  onEndPreview,
   onActivate,
   navRef,
 }: {
   activeId: string;
   openId: string | null;
-  onPreview: (id: TreatmentId) => void;
-  onEndPreview: () => void;
   onActivate: (id: TreatmentId) => void;
   navRef: React.RefObject<HTMLUListElement | null>;
 }) {
-  const handleBlur = (e: FocusEvent<HTMLUListElement>) => {
-    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
-      onEndPreview();
-    }
-  };
-
   return (
     <ul
       ref={navRef}
       className="mt-10 flex flex-wrap justify-center gap-2.5 lg:mt-12"
-      onMouseLeave={onEndPreview}
-      onBlur={handleBlur}
     >
       {carSpots.map((spot) => {
         const isActive = spot.id === activeId;
@@ -334,8 +306,6 @@ function ZoneNav({
               <button
                 type="button"
                 onClick={() => onActivate(spot.id)}
-                onMouseEnter={() => onPreview(spot.id)}
-                onFocus={() => onPreview(spot.id)}
                 aria-expanded={openId === spot.id}
                 style={style}
                 className={className}
@@ -345,8 +315,6 @@ function ZoneNav({
             ) : (
               <Link
                 href={`/trattamenti#${spot.id}`}
-                onMouseEnter={() => onPreview(spot.id)}
-                onFocus={() => onPreview(spot.id)}
                 style={style}
                 className={className}
               >

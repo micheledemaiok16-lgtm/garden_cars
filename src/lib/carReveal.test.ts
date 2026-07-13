@@ -19,8 +19,10 @@ describe("getReveal", () => {
     expect(r?.anchorFrame).toBe(18);
     expect(r?.dir).toBe("/home/centralina-reveal");
   });
-  it("undefined per servizi senza reveal", () => {
-    expect(getReveal("lucidatura")).toBeUndefined();
+  it("undefined per id sconosciuti", () => {
+    // Ormai tutti i servizi hanno un reveal: il caso "senza" resta solo
+    // per id inesistenti (fallback silenzioso di CarDoorReveal).
+    expect(getReveal("servizio-inesistente")).toBeUndefined();
   });
 });
 

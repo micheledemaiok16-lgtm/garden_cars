@@ -83,6 +83,12 @@ export default function Car360({
   const preloadRef = useRef<HTMLImageElement[]>([]);
   const lastImgIdxRef = useRef(-1); // ultimo frame mostrato nell'overlay img
   const overlayRef = useRef(false); // true = mostro img (scrub), false = video
+  // Uscita da scrub in corso: il video sta "cercando" (seek) il frame corrente.
+  // L'img resta visibile come ponte finché il seek non è completato ('seeked'),
+  // altrimenti si vedrebbe per un attimo il vecchio frame del video (il seek in
+  // un mp4 è lento). `resyncCancel` annulla il ponte se riparte un drag.
+  const resyncPendingRef = useRef(false);
+  const resyncCancelRef = useRef<(() => void) | null>(null);
 
   const [failed, setFailed] = useState(false);
 
@@ -115,24 +121,77 @@ export default function Car360({
   const applyOverlay = (active: boolean) => {
     const v = videoRef.current;
     const img = imgRef.current;
-    if (overlayRef.current !== active) {
-      overlayRef.current = active;
-      if (img) img.style.opacity = active ? "1" : "0";
-      if (v) v.style.opacity = active ? "0" : "1";
-      // Uscendo dallo scrub: riallinea il video al frame mostrato, così alla
-      // ripresa della riproduzione non "salta".
-      if (!active && v && periodRef.current > 0) {
-        try {
-          v.currentTime = frameToTime(frameRef.current);
-        } catch {}
+    if (!v || !img) return;
+
+    if (active) {
+      // Entrata/permanenza in scrub: img subito visibile, video nascosto. Un
+      // eventuale ponte di ri-sincronizzazione va annullato: un nuovo grab non
+      // deve farsi "spegnere" l'img da un vecchio 'seeked' ancora pendente.
+      resyncCancelRef.current?.();
+      if (!overlayRef.current) {
+        overlayRef.current = true;
+        img.style.opacity = "1";
+        v.style.opacity = "0";
       }
-    }
-    if (active && img) {
       const idx = imgIndex(frameRef.current);
       if (idx !== lastImgIdxRef.current) {
         lastImgIdxRef.current = idx;
         img.src = SPIN.srcFor(idx);
       }
+      return;
+    }
+
+    // Uscita da scrub → torniamo al video. NON scambiare subito le opacità: il
+    // video è fermo al frame d'inizio drag e il seek verso il frame corrente è
+    // lento (mp4), quindi mostrarlo ora rivelerebbe il vecchio frame. Teniamo
+    // l'img come ponte finché il video non ha raggiunto il frame ('seeked').
+    if (!overlayRef.current || resyncPendingRef.current) return;
+    if (periodRef.current <= 0) {
+      overlayRef.current = false;
+      img.style.opacity = "0";
+      v.style.opacity = "1";
+      return;
+    }
+
+    const target = frameToTime(frameRef.current);
+    const commitSwap = () => {
+      if (draggingRef.current) return; // ripartito un drag: non toccare nulla
+      overlayRef.current = false;
+      img.style.opacity = "0";
+      v.style.opacity = "1";
+    };
+
+    // Già al frame giusto e decodificato → swap immediato (nessun lampo).
+    if (Math.abs(v.currentTime - target) < 0.02 && v.readyState >= 2) {
+      commitSwap();
+      return;
+    }
+
+    // Seek + attesa del frame decodificato, con timeout di sicurezza (se il
+    // browser non emette 'seeked', non lasciamo l'img bloccata sopra).
+    resyncPendingRef.current = true;
+    let done = false;
+    const cleanup = () => {
+      done = true;
+      v.removeEventListener("seeked", onSeeked);
+      clearTimeout(to);
+      resyncPendingRef.current = false;
+      resyncCancelRef.current = null;
+    };
+    const onSeeked = () => {
+      if (done) return;
+      cleanup();
+      commitSwap();
+    };
+    const to = setTimeout(onSeeked, 400);
+    resyncCancelRef.current = () => {
+      if (!done) cleanup(); // annullato da un nuovo drag: niente swap
+    };
+    v.addEventListener("seeked", onSeeked);
+    try {
+      v.currentTime = target;
+    } catch {
+      onSeeked();
     }
   };
 
@@ -209,7 +268,12 @@ export default function Car360({
             const p = v.play();
             if (p && typeof p.catch === "function") p.catch(() => {});
           }
-          frameRef.current = timeToFrame(v.currentTime);
+          // Durante il ponte di ri-sincronizzazione (img ancora sopra) il
+          // currentTime è ancora quello vecchio: non pilotare frameRef finché
+          // il video non è davvero in scena, o i pallini/reveal salterebbero.
+          if (!resyncPendingRef.current) {
+            frameRef.current = timeToFrame(v.currentTime);
+          }
         }
         const idx = imgIndex(frameRef.current);
         if (idx !== lastIdxRef.current) {
@@ -220,7 +284,10 @@ export default function Car360({
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      resyncCancelRef.current?.(); // smonta il ponte + il listener 'seeked'
+    };
     // applyOverlay/frameToTime leggono solo ref: la closure iniziale resta valida.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onFrameChange]);

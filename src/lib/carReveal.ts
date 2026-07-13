@@ -57,6 +57,10 @@ export const reveals: readonly CarReveal[] = [
     frameCount: 61,
     dir: "/home/interni-reveal",
     alt: "Abitacolo restaurato in pelle cognac: sedili e volante nuovi",
+    // Apertura = video a 1.2× (sorgente 121f/24fps ≈ 5.04s → 4200ms), come
+    // Vetri/Detailing (l'ease-out di default risultava troppo veloce).
+    openMs: 4200,
+    closeMs: 1260,
   },
   {
     id: "centraline",
@@ -80,12 +84,42 @@ export const reveals: readonly CarReveal[] = [
     frameCount: 61,
     dir: "/home/vetri-reveal",
     alt: "Vetri laterali che si oscurano progressivamente fino alla tinta nera",
-    // Trasformazione di stato → loop ping-pong: oscura (2×) → pausa →
-    // schiarisce → pausa → ripete. Chiusura in reverse a 4×.
-    openMs: 2520,
+    // Trasformazione di stato → loop ping-pong: oscura (1.2×, sorgente
+    // 121f/24fps ≈ 5.04s → 4200ms) → pausa → schiarisce → pausa → ripete.
+    // Chiusura in reverse a 4×.
+    openMs: 4200,
     closeMs: 1260,
     loop: true,
     loopHoldMs: 1100,
+  },
+  {
+    id: "lucidatura",
+    anchorFrame: 136,
+    // 61 fotogrammi estratti dal clip seedance della "lama di luce": una
+    // striscia di riflesso scorre sulla carrozzeria e accende il nero a
+    // specchio (la vernice dello spin è già lucida: l'effetto è la passata).
+    frameCount: 61,
+    dir: "/home/lucidatura-reveal",
+    alt: "Passata di lucidatura: una lama di luce accende la vernice nera a specchio",
+    // Loop ping-pong = la passata va e viene, come una lucidatrice al lavoro.
+    openMs: 2520,
+    closeMs: 1260,
+    loop: true,
+    loopHoldMs: 700,
+  },
+  {
+    id: "car-detailing",
+    anchorFrame: 132,
+    // 61 fotogrammi estratti dal clip seedance del lavaggio: schiuma sulla
+    // ruota anteriore sx → risciacquo → cerchio pulito e brillante.
+    frameCount: 61,
+    dir: "/home/detailing-reveal",
+    alt: "Lavaggio di dettaglio: schiuma e risciacquo sulla ruota, cerchio brillante",
+    // Arco narrativo (schiuma→risciacquo) → niente loop: one-way con hold
+    // sul pulito; chiusura = rewind rapido. Apertura = video a 1.7×
+    // (sorgente 121f/24fps ≈ 5.04s → 2965ms).
+    openMs: 2965,
+    closeMs: 1260,
   },
 ];
 
