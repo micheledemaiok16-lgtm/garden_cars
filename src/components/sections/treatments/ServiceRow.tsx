@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useRef } from "react";
 import {
   motion,
@@ -13,6 +12,8 @@ import {
 } from "framer-motion";
 import type { Treatment } from "@/lib/treatments";
 import { cn } from "@/lib/utils";
+import { whatsappLink } from "@/lib/site";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { CounterStats } from "./CounterStats";
 
 const fadeUp: Variants = {
@@ -23,6 +24,23 @@ const fadeUp: Variants = {
     transition: { duration: 0.85, ease: [0.16, 1, 0.3, 1] },
   },
 };
+
+/**
+ * Rende in grassetto le porzioni `**testo**` (stile markdown) dell'intro di
+ * un trattamento — usato per i nomi di prodotto/brand (es. "Defender").
+ */
+function renderRichText(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) => {
+    const match = part.match(/^\*\*([^*]+)\*\*$/);
+    return match ? (
+      <strong key={i} className="font-bold">
+        {match[1]}
+      </strong>
+    ) : (
+      part
+    );
+  });
+}
 
 const stagger: Variants = {
   hidden: {},
@@ -155,7 +173,7 @@ export function ServiceRow({
                 dark ? "text-paper/70" : "text-ink/70",
               )}
             >
-              {treatment.intro}
+              {renderRichText(treatment.intro)}
             </motion.p>
 
             {/* Contatore animato (Centraline) */}
@@ -204,9 +222,15 @@ export function ServiceRow({
             </motion.ul>
 
             <motion.div variants={fadeUp}>
-              <Link href="/#contatti" className="btn btn-primary mt-10">
+              <a
+                href={whatsappLink(treatment.whatsappMessage)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-primary mt-10 inline-flex items-center gap-2.5"
+              >
+                <WhatsAppIcon className="h-5 w-5" />
                 Richiedi un preventivo
-              </Link>
+              </a>
             </motion.div>
           </motion.div>
         </div>
@@ -324,8 +348,14 @@ function ServiceMedia({
       style={parallaxY ? { y: parallaxY } : undefined}
       className={cn(
         "group relative w-full overflow-hidden rounded-3xl shadow-2xl shadow-black/30 transition-shadow duration-500 hover:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.55)]",
-        // Vetri: riquadro più basso (−10% d'altezza), taglia dal basso.
-        treatment.id === "trattamento-vetri" ? "aspect-[40/27]" : "aspect-[4/3]",
+        // Vetri con galleria "stacked" (principale + miniature): serve più
+        // altezza dei riquadri normali per ospitare i due livelli impilati.
+        // Vetri senza stacked (fallback): riquadro più basso, taglia dal basso.
+        treatment.id === "trattamento-vetri"
+          ? treatment.galleryLayout === "stacked"
+            ? "aspect-[4/3]"
+            : "aspect-[40/27]"
+          : "aspect-[4/3]",
         dark ? "ring-1 ring-white/10" : "ring-1 ring-ink/10",
       )}
     >
@@ -359,7 +389,7 @@ function ServiceMedia({
           <MasterTuningBadge />
         </>
       ) : gallery ? (
-        <Collage images={gallery} />
+        <Collage images={gallery} layout={treatment.galleryLayout} />
       ) : !media ? (
         <Placeholder />
       ) : media.type === "video" ? (
@@ -392,7 +422,13 @@ function ServiceMedia({
             // alto, così la riduzione d'altezza taglia dal basso.
             treatment.id === "trattamento-vetri"
               ? "scale-[1.1] object-top group-hover:scale-[1.15]"
-              : hoverZoom,
+              : // Antifurto: l'auto nell'illustrazione è decentrata a sinistra
+                // (a destra c'è il margine per le etichette "Antifurto
+                // satellitare" ecc.) → object-position spostata dal centro,
+                // tarata a vista (44%-25px poi -5px = 44%-30px).
+                treatment.id === "antifurto"
+                ? cn("object-[calc(44%_-_30px)_center]", hoverZoom)
+                : hoverZoom,
             illuminate,
           )}
         />
@@ -535,13 +571,19 @@ function SmerigliatriceDecor({ reduce }: { reduce: boolean | null }) {
   );
 }
 
-/** Collage a 3, 4 o 5 immagini. */
-function Collage({ images }: { images: { src: string; alt: string; type?: "image" | "video"; caption?: string }[] }) {
+/** Collage a 3, 4 o 5 immagini (o layout "stacked": principale + 4 miniature). */
+function Collage({
+  images,
+  layout,
+}: {
+  images: { src: string; alt: string; type?: "image" | "video"; caption?: string }[];
+  layout?: "stacked";
+}) {
   const tile =
     "group/tile relative overflow-hidden rounded-2xl ring-1 ring-white/10";
   const mediaClass =
     "object-cover transition-transform duration-700 ease-out group-hover/tile:scale-105";
-  
+
   const renderMedia = (item: { src: string; alt: string; type?: "image" | "video"; caption?: string }) => {
     return (
       <>
@@ -575,6 +617,36 @@ function Collage({ images }: { images: { src: string; alt: string; type?: "image
       </>
     );
   };
+
+  if (layout === "stacked") {
+    const grid = images.slice(0, -1);
+    const bottom = images[images.length - 1];
+    return (
+      <div className="flex h-full w-full flex-col gap-2.5">
+        {/* Griglia 2×2 (i 4 vetri), sopra: occupa la parte principale. */}
+        <div className="grid min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-2">
+          {grid.map((img) => (
+            <div key={img.src} className={tile}>
+              {renderMedia(img)}
+            </div>
+          ))}
+        </div>
+
+        {/* Immagine singola (pellicola), sotto, allungata: la griglia sopra
+            (flex-1) si restringe di conseguenza, nessuno zoom/crop extra,
+            mai coperta. */}
+        <div className={cn(tile, "h-24 shrink-0 sm:h-28 lg:h-32")}>
+          <Image
+            src={bottom.src}
+            alt={bottom.alt}
+            fill
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            className={mediaClass}
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (images.length === 5) {
     const [main, ...crops] = images;

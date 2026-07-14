@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -48,10 +48,32 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [open, reduce]);
 
-  const closeMobile = () => {
+  const closeMobile = useCallback(() => {
     setOpen(false);
     setMobileSub(null);
-  };
+  }, []);
+
+  // A menu aperto la pagina sotto non deve scorrere: su mobile il pannello è
+  // alto quanto lo schermo e lo scroll "attraversava" al body.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  // Passando a desktop il pannello mobile sparisce ma lo stato resterebbe
+  // aperto (e il body bloccato).
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const onChange = (e: MediaQueryListEvent) => {
+      if (e.matches) closeMobile();
+    };
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, [closeMobile]);
 
   return (
     <motion.header
@@ -141,7 +163,10 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
-            className="border-b border-white/10 bg-ink/95 backdrop-blur-xl lg:hidden"
+            // Il pannello non può superare lo schermo meno l'header: con il
+            // sottomenu "Trattamenti" aperto le ultime voci e la CTA finivano
+            // fuori dal viewport, irraggiungibili (l'header è fixed).
+            className="max-h-[calc(100svh-74px)] overflow-y-auto overscroll-contain border-b border-white/10 bg-ink/95 backdrop-blur-xl lg:hidden"
           >
             <ul className="wrap flex flex-col gap-1 py-6">
               {nav.map((item) =>

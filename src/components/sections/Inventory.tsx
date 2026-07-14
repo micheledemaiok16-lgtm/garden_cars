@@ -55,7 +55,11 @@ export default function Inventory() {
                 src={AUTOSCOUT_EMBED}
                 title="Parco auto Garden's Cars su AutoScout24"
                 loading="lazy"
-                className="block h-[clamp(640px,86vh,1080px)] w-full bg-white"
+                // svh, non vh: con vh l'iframe cambia altezza (e fa "saltare"
+                // la pagina) ogni volta che la barra indirizzi mobile si
+                // ritira. Sotto sm il minimo scende: 640px su un telefono
+                // riempivano lo schermo e intrappolavano lo scroll.
+                className="block h-[clamp(30rem,86svh,1080px)] w-full bg-white sm:h-[clamp(640px,86svh,1080px)]"
                 scrolling="auto"
               />
             </div>

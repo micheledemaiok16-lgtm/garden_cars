@@ -21,6 +21,9 @@ export const site = {
   // Recapito principale (compatibilità con i componenti esistenti).
   phone: "+39 338 777 1436",
   phoneHref: "tel:+393387771436",
+  // Numero WhatsApp Garden's Cars in formato internazionale (senza +, spazi o
+  // trattini): usato dall'helper whatsappLink() per i link wa.me.
+  whatsapp: "393533699837",
   email: "gardenscarsgiffoni@gmail.com",
   vat: "P.IVA 05726810657",
   // Prenotazione consulenza: per ora rimanda ai contatti, in futuro link Calendly.
@@ -33,7 +36,7 @@ export const site = {
   social: [
     { label: "Instagram", href: "#" },
     { label: "Facebook", href: "#" },
-    { label: "WhatsApp", href: "#" },
+    { label: "WhatsApp", href: "https://wa.me/393533699837" },
   ],
   // Coordinate approssimative di Giffoni Valle Piana per la mappa.
   // mapEmbed: anteprima Google Maps (iframe, nessuna API key richiesta).
@@ -43,6 +46,16 @@ export const site = {
   mapLink:
     "https://www.google.com/maps/search/?api=1&query=40.7056%2C14.945",
 } as const;
+
+/**
+ * Costruisce un link WhatsApp (wa.me) verso il numero Garden's Cars.
+ * Con `message`, il testo compare già scritto nella chat dell'utente, che deve
+ * solo premere invio. Su mobile apre l'app, su desktop WhatsApp Web/Desktop.
+ */
+export function whatsappLink(message?: string) {
+  const base = `https://wa.me/${site.whatsapp}`;
+  return message ? `${base}?text=${encodeURIComponent(message)}` : base;
+}
 
 export type NavLink = { label: string; href: string };
 export type NavMenu = { label: string; children: readonly NavLink[] };
@@ -60,6 +73,7 @@ export const nav: readonly NavItem[] = [
     })),
   },
   { label: "Chi siamo", href: "/#chi-siamo" },
+  { label: "FAQ", href: "/#domande-frequenti" },
   { label: "Contatti", href: "/#contatti" },
 ];
 

@@ -4,7 +4,7 @@ import Hero from "@/components/sections/Hero";
 import Intro from "@/components/sections/Intro";
 import Inventory from "@/components/sections/Inventory";
 import CarExplorer from "@/components/sections/CarExplorer";
-import OtherTreatments from "@/components/sections/OtherTreatments";
+import Faq from "@/components/sections/Faq";
 import Contact from "@/components/sections/Contact";
 
 export default function Home() {
@@ -16,8 +16,8 @@ export default function Home() {
         <Intro />
         <Inventory />
         <CarExplorer />
-        <OtherTreatments />
         <Contact />
+        <Faq />
       </main>
       <Footer />
     </>

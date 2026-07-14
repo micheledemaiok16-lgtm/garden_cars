@@ -35,12 +35,17 @@ export default function CarDoorReveal({
   open,
   instant = false,
   reduce,
+  eagerPreload = false,
   onClosed,
 }: {
   revealId: string;
   open: boolean;
   instant?: boolean;
   reduce: boolean | null;
+  /** Precarica i fotogrammi subito invece che alla prima apertura. Vero solo
+   *  dove ha senso spendere la banda (desktop, rete non a risparmio dati): i
+   *  sei reveal della home valgono insieme ~15 MB. */
+  eagerPreload?: boolean;
   onClosed?: () => void;
 }) {
   const reveal = getReveal(revealId);
@@ -58,6 +63,35 @@ export default function CarDoorReveal({
   const closedNotifiedRef = useRef(true); // niente notifica spuria al mount
   const onClosedRef = useRef(onClosed);
   const preloadRef = useRef<HTMLImageElement[]>([]);
+  const preloadStartedRef = useRef(false);
+  const rafRef = useRef(0);
+  const runningRef = useRef(false);
+  const tickRef = useRef<() => void>(() => {});
+
+  // Precarico dei fotogrammi dell'apertura (come Car360 con i frame dello
+  // spin): allo swap sono già in cache, niente lampo. On-demand alla prima
+  // apertura, tranne dove `eagerPreload` autorizza a spenderli in anticipo.
+  const ensurePreload = () => {
+    if (preloadStartedRef.current || !reveal) return;
+    preloadStartedRef.current = true;
+    const imgs: HTMLImageElement[] = [];
+    for (let i = 0; i < reveal.frameCount; i++) {
+      const im = new Image();
+      im.src = revealFrameSrc(reveal, i);
+      imgs.push(im);
+    }
+    preloadRef.current = imgs;
+  };
+
+  // Il loop rAF gira solo quando c'è qualcosa da animare: a riposo si spegne da
+  // sé (vedi `idle` nel tick) e riparte all'apertura. Senza questo, i sei
+  // reveal della home terrebbero sei loop a 60 fps vivi per sempre.
+  const startLoop = () => {
+    if (runningRef.current) return;
+    runningRef.current = true;
+    lastTickRef.current = 0;
+    rafRef.current = requestAnimationFrame(() => tickRef.current());
+  };
 
   // Tieni i ref allineati alle prop senza far ripartire il loop rAF.
   useEffect(() => {
@@ -67,8 +101,17 @@ export default function CarDoorReveal({
       // Ogni apertura fa ripartire l'eventuale loop dall'andata, senza pausa.
       loopDirRef.current = 1;
       loopHoldUntilRef.current = 0;
+      ensurePreload();
+      startLoop();
     }
+    // ensurePreload/startLoop sono idempotenti e leggono solo ref.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  useEffect(() => {
+    if (eagerPreload) ensurePreload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eagerPreload, reveal]);
   useEffect(() => {
     instantRef.current = instant;
   }, [instant]);
@@ -79,19 +122,6 @@ export default function CarDoorReveal({
     onClosedRef.current = onClosed;
   }, [onClosed]);
 
-  // Precarico dei fotogrammi dell'apertura (come Car360 con i frame dello spin):
-  // allo swap sono già in cache, niente lampo.
-  useEffect(() => {
-    if (!reveal) return;
-    const imgs: HTMLImageElement[] = [];
-    for (let i = 0; i < reveal.frameCount; i++) {
-      const im = new Image();
-      im.src = revealFrameSrc(reveal, i);
-      imgs.push(im);
-    }
-    preloadRef.current = imgs;
-  }, [reveal]);
-
   // Applica opacità con o senza transizione (instant/reduce = niente dissolvenza).
   const setVisible = (img: HTMLImageElement, visible: boolean, snap: boolean) => {
     img.style.transition = snap ? "none" : `opacity ${FADE_MS}ms ease`;
@@ -100,7 +130,6 @@ export default function CarDoorReveal({
 
   useEffect(() => {
     if (!reveal) return;
-    let raf = 0;
     const tick = () => {
       const img = imgRef.current;
       if (img) {
@@ -178,11 +207,29 @@ export default function CarDoorReveal({
           closedNotifiedRef.current = true;
           onClosedRef.current?.();
         }
+
+        // Chiuso, richiusura finita, overlay già svanito: non c'è più nulla da
+        // animare → spegni il loop. Lo riaccende la prossima apertura.
+        if (
+          !isOpen &&
+          progressRef.current === 0 &&
+          !shownRef.current &&
+          closedNotifiedRef.current
+        ) {
+          runningRef.current = false;
+          return;
+        }
       }
-      raf = requestAnimationFrame(tick);
+      rafRef.current = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    tickRef.current = tick;
+    // Al mount l'overlay è chiuso: nessun loop finché non serve. Se il
+    // componente si rimonta mentre è aperto, riparte da qui.
+    if (openRef.current || progressRef.current > 0) startLoop();
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      runningRef.current = false;
+    };
   }, [reveal]);
 
   if (!reveal) return null; // asset assente → fallback silenzioso: nessun overlay

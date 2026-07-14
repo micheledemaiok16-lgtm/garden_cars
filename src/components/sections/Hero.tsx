@@ -57,7 +57,10 @@ export default function Hero() {
     <section
       ref={ref}
       id="top"
-      className="cine-vignette relative flex h-[100svh] min-h-[640px] items-center overflow-hidden pt-24 md:pt-28"
+      // Il pavimento di 640px vale solo se il viewport è già alto almeno
+      // altrettanto: su un telefono in orizzontale (~375px) forzerebbe l'hero
+      // a sfondare lo schermo.
+      className="cine-vignette relative flex h-[100svh] items-center overflow-hidden pt-24 [@media(min-height:640px)]:min-h-[640px] md:pt-28"
     >
       {/* Sfondo: video del reveal (telo) → poi sfuma. Statico con reduced-motion. */}
       <motion.div
@@ -139,8 +142,11 @@ export default function Hero() {
             </span>
           </motion.div>
 
+          {/* Niente whitespace-nowrap: sotto ~500px la riga non ci sta e, con
+              l'overflow-x nascosto del body, il titolo veniva semplicemente
+              tagliato invece di andare a capo. */}
           <h1
-            className="display-hero whitespace-nowrap"
+            className="display-hero text-balance"
             style={{ fontSize: "clamp(2.25rem, 7vw, 6rem)" }}
           >
             <Line variant={lineUp}>

@@ -14,8 +14,7 @@ import {
   frameIndex,
   normalizeFrame,
 } from "@/lib/carSpin";
-
-const CAR_ASPECT = "16 / 9";
+import { useAllowHeavyPreload } from "@/lib/useMediaQuery";
 // La dissolvenza dei bordi verso il nero (#000) della sezione è BAKATA negli
 // asset (video e WebP hanno una rampa verso il nero sui 4 lati): niente overlay
 // né CSS mask sul <video> — la mask disattiverebbe il compositing accelerato
@@ -89,8 +88,13 @@ export default function Car360({
   // un mp4 è lento). `resyncCancel` annulla il ponte se riparte un drag.
   const resyncPendingRef = useRef(false);
   const resyncCancelRef = useRef<(() => void) | null>(null);
+  const preloadStartedRef = useRef(false);
 
   const [failed, setFailed] = useState(false);
+  // Il video (4,7 MB) viene agganciato solo quando la sezione si avvicina al
+  // viewport: chi non scorre fin qui non lo scarica affatto.
+  const [videoNear, setVideoNear] = useState(false);
+  const allowHeavyPreload = useAllowHeavyPreload();
 
   // fotogramma logico → istante nel video (loop lineare: FC fotogrammi sull'intera durata).
   const frameToTime = (f: number) =>
@@ -102,10 +106,15 @@ export default function Car360({
     return wrapFrame((t / period) * FC);
   };
 
-  // Precarico dei 144 fotogrammi WebP: durante il trascinamento (o il tween
-  // verso un servizio) mostriamo l'immagine invece di far "cercare" il video —
-  // il seek in un mp4 compresso è a scatti, l'immagine è istantanea.
-  useEffect(() => {
+  // Precarico dei 144 fotogrammi WebP (3,6 MB): durante il trascinamento (o il
+  // tween verso un servizio) mostriamo l'immagine invece di far "cercare" il
+  // video — il seek in un mp4 compresso è a scatti, l'immagine è istantanea.
+  // Su desktop lo facciamo in anticipo; su mobile/rete lenta solo alla PRIMA
+  // interazione che ne ha bisogno, per non bruciare megabyte a chi guarda e
+  // basta. I riferimenti restano vivi in un ref così il browser non li scarta.
+  const ensurePreload = () => {
+    if (preloadStartedRef.current) return;
+    preloadStartedRef.current = true;
     const imgs: HTMLImageElement[] = [];
     for (let i = 0; i < FC; i++) {
       const im = new Image();
@@ -113,7 +122,16 @@ export default function Car360({
       imgs.push(im);
     }
     preloadRef.current = imgs;
-  }, []);
+  };
+
+  useEffect(() => {
+    if (allowHeavyPreload) ensurePreload();
+  }, [allowHeavyPreload]);
+
+  // Il tween verso l'angolo di un servizio scrubba i WebP: servono adesso.
+  useEffect(() => {
+    if (targetFrame !== null) ensurePreload();
+  }, [targetFrame]);
 
   // Aggiorna l'overlay: img visibile (scrub) o video visibile (riposo), e sorgente
   // dell'img al frame logico corrente. Manipolazione diretta del DOM per non
@@ -206,7 +224,10 @@ export default function Car360({
   // Pausa quando la sezione è fuori dal viewport.
   useEffect(() => {
     const el = boxRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setVideoNear(true); // niente IO (browser antico): carica e vai
+      return;
+    }
     const io = new IntersectionObserver(
       ([e]) => {
         inViewRef.current = e.isIntersecting;
@@ -216,6 +237,31 @@ export default function Car360({
     io.observe(el);
     return () => io.disconnect();
   }, []);
+
+  // Aggancio del video solo in prossimità del viewport (un'ampia fascia di
+  // margine così arriva già pronto), e una volta sola: `videoNear` non torna
+  // mai a false, altrimenti riscaricheremmo il file a ogni passaggio.
+  useEffect(() => {
+    const el = boxRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          setVideoNear(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // Aggiungere un <source> a un <video> già montato non fa partire il download
+  // da solo: va chiesto esplicitamente con load().
+  useEffect(() => {
+    if (videoNear) videoRef.current?.load();
+  }, [videoNear]);
 
   // Se il video è già in cache al mount, l'evento loadedmetadata può essere già
   // passato prima che il gestore si agganci: inizializziamo comunque
@@ -308,6 +354,7 @@ export default function Car360({
     try {
       (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
     } catch {}
+    ensurePreload(); // su mobile i WebP dello scrub si scaricano da qui
     draggingRef.current = true;
     const v = videoRef.current;
     // Presa "dal vivo": in riposo il frame corrente è il tempo del video, non
@@ -345,10 +392,14 @@ export default function Car360({
   };
 
   return (
+    // touch-pan-y (non touch-none): il trascinamento orizzontale ruota l'auto,
+    // ma il dito deve poter comunque scorrere la pagina in verticale — con
+    // touch-none lo stage diventa una trappola per il gesto su mobile.
+    // L'auto in 16/9 su un telefono sarebbe alta ~210px: sotto sm passiamo a
+    // 4/3, che le dà spazio reale senza sfondare il viewport.
     <div
       ref={boxRef}
-      className="relative w-full cursor-grab touch-none select-none active:cursor-grabbing"
-      style={{ aspectRatio: CAR_ASPECT }}
+      className="relative aspect-[4/3] w-full cursor-grab touch-pan-y select-none active:cursor-grabbing sm:aspect-[16/9]"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
@@ -372,11 +423,12 @@ export default function Car360({
         onError={() => setFailed(true)}
         className="pointer-events-none absolute inset-0 h-full w-full object-contain"
       >
-        <source
-          src={`/home/spin/spin-loop.mp4?v=${SPIN_ASSET_VERSION}`}
-          type="video/mp4"
-        />
-
+        {videoNear && (
+          <source
+            src={`/home/spin/spin-loop.mp4?v=${SPIN_ASSET_VERSION}`}
+            type="video/mp4"
+          />
+        )}
       </video>
 
       {/* Overlay per lo scrubbing: durante drag/tween mostra il fotogramma WebP

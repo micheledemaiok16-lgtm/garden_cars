@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Reveal } from "@/components/ui/Reveal";
-import { site } from "@/lib/site";
+import { site, whatsappLink } from "@/lib/site";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 
 export default function Contact() {
   const [sent, setSent] = useState(false);
@@ -41,6 +42,19 @@ export default function Contact() {
             </dl>
           </Reveal>
 
+          <Reveal delay={0.18}>
+            <a
+              href={whatsappLink()}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Scrivici su WhatsApp"
+              className="mt-8 inline-flex items-center gap-2.5 rounded-full bg-[#25D366] px-6 py-3 font-display font-semibold text-ink shadow-lg shadow-[#25D366]/20 transition-transform hover:scale-[1.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
+            >
+              <WhatsAppIcon className="h-5 w-5" />
+              Scrivici su WhatsApp
+            </a>
+          </Reveal>
+
           <Reveal delay={0.2}>
             <a
               href={site.mapLink}
@@ -73,7 +87,7 @@ export default function Contact() {
         </div>
 
         {/* Form */}
-        <div className="lg:col-span-7">
+        <div className="lg:col-span-7 lg:mt-[100px]">
           <Reveal direction="left">
             <form
               onSubmit={(e) => {

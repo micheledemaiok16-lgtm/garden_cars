@@ -9,6 +9,7 @@ import { carSpots, type TreatmentId } from "@/lib/carSpots";
 import { frameDistance } from "@/lib/carSpin";
 import { getReveal, reveals } from "@/lib/carReveal";
 import { cn } from "@/lib/utils";
+import { useAllowHeavyPreload } from "@/lib/useMediaQuery";
 // TEMP: Car360 (video+WebP) al posto di Car3D per valutare la rigenerazione
 // degli asset — vedi Car3D per lo stage 3D. Ripristinare Car3D a valutazione fatta.
 import Car360 from "./Car360";
@@ -31,6 +32,9 @@ const INITIAL = carSpots.find((s) => s.id === "lucidatura") ?? carSpots[0];
  */
 export default function CarExplorer() {
   const reduce = useReducedMotion();
+  // Su mobile/rete lenta i fotogrammi dei reveal (~15 MB in sei) si scaricano
+  // solo all'apertura, non all'ingresso in pagina.
+  const eagerPreload = useAllowHeavyPreload();
 
   // `targetFrame` = angolo verso cui l'auto ruota dolcemente (null = riposo /
   // auto-rotazione). `openId` = reveal attualmente aperto (null = nessuno);
@@ -138,23 +142,38 @@ export default function CarExplorer() {
       <div className="glow-racing pointer-events-none absolute left-1/2 top-0 h-[40rem] w-[40rem] -translate-x-1/2 opacity-20 blur-3xl" />
 
       <div className="wrap relative">
-        <div className="max-w-2xl">
-          <Reveal>
-            <span
-              className="eyebrow text-racing-bright"
-              style={{ fontSize: "clamp(1rem, 1.3vw, 1.25rem)" }}
-            >
-              Esplora i servizi
-            </span>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <h2 className="display-xl mt-5">Un&apos;auto, cinque trattamenti.</h2>
-          </Reveal>
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-2xl">
+            <Reveal>
+              <span
+                className="eyebrow text-racing-bright"
+                style={{ fontSize: "clamp(1rem, 1.3vw, 1.25rem)" }}
+              >
+                Esplora i servizi
+              </span>
+            </Reveal>
+            <Reveal delay={0.05}>
+              <h2 className="display-xl mt-5">Un&apos;auto, sei trattamenti.</h2>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <p className="mt-5 max-w-md text-paper/70">
+                Trascina per ruotare l&apos;auto e vai dritto al trattamento che
+                ti interessa.
+              </p>
+            </Reveal>
+          </div>
+
+          {/* CTA verso la pagina trattamenti: in alto a destra della sezione
+              su desktop, sotto l'header su mobile. */}
           <Reveal delay={0.1}>
-            <p className="mt-5 max-w-md text-paper/70">
-              Trascina per ruotare l&apos;auto e vai dritto al trattamento che ti
-              interessa.
-            </p>
+            <div className="flex shrink-0 flex-col items-start gap-3 lg:items-end lg:text-right">
+              <p className="font-display text-base text-paper/70">
+                Scopri la nostra sezione trattamenti
+              </p>
+              <a href="/trattamenti" className="btn btn-ghost">
+                Trattamenti
+              </a>
+            </div>
           </Reveal>
         </div>
 
@@ -168,8 +187,9 @@ export default function CarExplorer() {
               onGrab={handleGrab}
               showHint={!touched}
             >
-              {/* Un overlay per reveal, sempre montati: i frame restano
-                  precaricati e ognuno apre/chiude in autonomia (openId). */}
+              {/* Un overlay per reveal, sempre montati: ognuno apre/chiude in
+                  autonomia (openId) e a riposo non consuma nulla (loop rAF
+                  spento, fotogrammi non precaricati se non eagerPreload). */}
               {reveals.map((r) => (
                 <CarDoorReveal
                   key={r.id}
@@ -177,6 +197,7 @@ export default function CarExplorer() {
                   open={openId === r.id}
                   instant={doorInstant}
                   reduce={reduce}
+                  eagerPreload={eagerPreload}
                   onClosed={onDoorClosed}
                 />
               ))}

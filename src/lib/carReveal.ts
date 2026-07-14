@@ -57,9 +57,8 @@ export const reveals: readonly CarReveal[] = [
     frameCount: 61,
     dir: "/home/interni-reveal",
     alt: "Abitacolo restaurato in pelle cognac: sedili e volante nuovi",
-    // Apertura = video a 1.2× (sorgente 121f/24fps ≈ 5.04s → 4200ms), come
-    // Vetri/Detailing (l'ease-out di default risultava troppo veloce).
-    openMs: 4200,
+    // Apertura = video a 2.5× (sorgente 121f/24fps ≈ 5.04s → 2016ms).
+    openMs: 2016,
     closeMs: 1260,
   },
   {
@@ -84,10 +83,9 @@ export const reveals: readonly CarReveal[] = [
     frameCount: 61,
     dir: "/home/vetri-reveal",
     alt: "Vetri laterali che si oscurano progressivamente fino alla tinta nera",
-    // Trasformazione di stato → loop ping-pong: oscura (1.2×, sorgente
-    // 121f/24fps ≈ 5.04s → 4200ms) → pausa → schiarisce → pausa → ripete.
-    // Chiusura in reverse a 4×.
-    openMs: 4200,
+    // Trasformazione di stato → loop ping-pong: oscura → pausa → schiarisce →
+    // pausa → ripete. Stesso ritmo (4×) sia in entrata (loop) sia in uscita.
+    openMs: 1260,
     closeMs: 1260,
     loop: true,
     loopHoldMs: 1100,

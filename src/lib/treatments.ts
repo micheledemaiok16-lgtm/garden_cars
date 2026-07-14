@@ -39,7 +39,10 @@ export interface Treatment {
   label: string;
   /** Titolo della sezione nella pagina. */
   title: string;
-  /** Descrizione del servizio. */
+  /**
+   * Descrizione del servizio. `**parola**` (stile markdown) viene reso in
+   * grassetto — usato per i nomi di prodotto/brand (es. "Defender").
+   */
   intro: string;
   /** Sotto-servizi / cosa comprende, mostrati come chip. */
   features: string[];
@@ -47,10 +50,24 @@ export interface Treatment {
   media: ServiceMedia | null;
   /** Collage di 3 o 4 immagini (ha precedenza su `media`). */
   gallery?: { src: string; alt: string; type?: "image" | "video"; caption?: string }[];
+  /**
+   * "stacked" (richiede `gallery` con 5 elementi: [...4 in griglia, ultima
+   * a parte]): la griglia 2×2 delle prime 4 immagini sopra (occupa la parte
+   * principale), l'ultima immagine in una fascia più bassa sotto — nessuna
+   * sovrapposizione. Assente → griglia/collage generico in base al numero
+   * di elementi.
+   */
+  galleryLayout?: "stacked";
   /** Micro-interazione dedicata. */
   anim: ServiceAnim;
   /** Statistiche animate (solo `counter`). */
   stats?: CounterStat[];
+  /**
+   * Messaggio precompilato del pulsante WhatsApp "Richiedi un preventivo",
+   * specifico per il servizio (più naturale del titolo incollato in un
+   * template generico, es. evita "il trattamento Antifurto").
+   */
+  whatsappMessage: string;
 }
 
 const L = "/trattamenti/lucidatura";
@@ -58,6 +75,7 @@ const RP = "/trattamenti/restauro-pelle";
 const V = "/trattamenti/trattamento-vetri";
 const C = "/trattamenti/centraline";
 const CD = "/trattamenti/car-detailing";
+const AF = "/trattamenti/antifurto";
 
 export const treatments: readonly Treatment[] = [
   {
@@ -90,6 +108,8 @@ export const treatments: readonly Treatment[] = [
       },
     ],
     anim: "mask",
+    whatsappMessage:
+      "Ciao Garden's Cars, vorrei maggiori informazioni sul restauro della pelle.",
   },
   {
     id: "car-detailing",
@@ -109,6 +129,8 @@ export const treatments: readonly Treatment[] = [
       alt: "Operatore Garden's Cars che lucida la carrozzeria con la lucidatrice orbitale",
     },
     anim: "bounce",
+    whatsappMessage:
+      "Ciao Garden's Cars, vorrei maggiori informazioni sul car detailing.",
   },
   {
     id: "lucidatura",
@@ -131,6 +153,8 @@ export const treatments: readonly Treatment[] = [
       zoom: true,
     },
     anim: "illuminate",
+    whatsappMessage:
+      "Ciao Garden's Cars, vorrei maggiori informazioni sulla lucidatura auto.",
   },
   {
     id: "trattamento-vetri",
@@ -166,8 +190,15 @@ export const treatments: readonly Treatment[] = [
         alt: "Finestrino anteriore con oscuramento 95%",
         caption: "95%",
       },
+      {
+        src: `${V}/pellicola.webp`,
+        alt: "Applicazione di pellicola PPF trasparente su un cofano rosso",
+      },
     ],
+    galleryLayout: "stacked",
     anim: "parallax",
+    whatsappMessage:
+      "Ciao Garden's Cars, vorrei maggiori informazioni su vetri e pellicole PPF.",
   },
   {
     id: "centraline",
@@ -183,13 +214,40 @@ export const treatments: readonly Treatment[] = [
     ],
     media: {
       type: "image",
-      src: `${C}/centralina_nuova.png`,
-      alt: "Centralina elettronica per la rimappatura del motore",
+      src: `${C}/centralina.png`,
+      alt: "Tecnico che riprogramma una centralina motore con strumentazione KESS",
     },
     anim: "counter",
     stats: [
       { label: "Potenza", value: 30, prefix: "+", suffix: " CV" },
       { label: "Coppia", value: 60, prefix: "+", suffix: " Nm" },
     ],
+    whatsappMessage:
+      "Ciao Garden's Cars, vorrei maggiori informazioni sulla rimappatura delle centraline.",
+  },
+  {
+    id: "antifurto",
+    label: "Antifurto",
+    title: "Antifurto",
+    intro:
+      "Montiamo **Defender**, il sistema antifurto di riferimento in concessionaria: blocco motore elettronico che impedisce l'avviamento senza il codice corretto, per una protezione invisibile ma efficace contro furto e scasso, mantenendo la piena affidabilità dell'auto.",
+    features: [
+      "Bloccasterzo meccanico",
+      "Protezione ECU e OBD",
+      "Antifurto satellitare",
+      "Batterie ibride ed elettriche",
+    ],
+    media: {
+      type: "image",
+      src: `${AF}/antifurto-defender.png`,
+      alt: "Schema del sistema antifurto Defender installato sull'auto",
+    },
+    // "illuminate" scurisce il media di base (pensato per un video/foto
+    // chiari, es. Lucidatura): su quest'immagine, già scura di suo, la
+    // rendeva illeggibile finché non in hover. "parallax" = nessuno
+    // scurimento, solo un leggero movimento in scroll (come Vetri & PPF).
+    anim: "parallax",
+    whatsappMessage:
+      "Ciao Garden's Cars, vorrei maggiori informazioni sull'installazione dell'antifurto Defender.",
   },
 ] as const;
