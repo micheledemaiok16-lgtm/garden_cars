@@ -11,7 +11,7 @@
 // lo stesso nome file a ogni rigenerazione): alzarla di 1 quando si
 // sostituiscono i file in public/home/spin, così browser e CDN non servono
 // le versioni vecchie dalla cache.
-export const SPIN_ASSET_VERSION = 2;
+export const SPIN_ASSET_VERSION = 3;
 
 export const SPIN = {
   frameCount: 144,

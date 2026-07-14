@@ -124,9 +124,16 @@ export default function Car360({
     preloadRef.current = imgs;
   };
 
+  // Il video va agganciato quando la sezione si avvicina, ma anche appena c'è un
+  // `targetFrame`: il tween misura il tempo sulla durata del video, e senza di
+  // essa l'auto non ruoterebbe e il reveal non si aprirebbe mai.
+  const videoActive = videoNear || targetFrame !== null;
+
+  // Anche dove la banda c'è, non prima che la sezione si avvicini: in cima alla
+  // pagina questi 3,6 MB competerebbero con il video dell'hero.
   useEffect(() => {
-    if (allowHeavyPreload) ensurePreload();
-  }, [allowHeavyPreload]);
+    if (allowHeavyPreload && videoActive) ensurePreload();
+  }, [allowHeavyPreload, videoActive]);
 
   // Il tween verso l'angolo di un servizio scrubba i WebP: servono adesso.
   useEffect(() => {
@@ -260,8 +267,8 @@ export default function Car360({
   // Aggiungere un <source> a un <video> già montato non fa partire il download
   // da solo: va chiesto esplicitamente con load().
   useEffect(() => {
-    if (videoNear) videoRef.current?.load();
-  }, [videoNear]);
+    if (videoActive) videoRef.current?.load();
+  }, [videoActive]);
 
   // Se il video è già in cache al mount, l'evento loadedmetadata può essere già
   // passato prima che il gestore si agganci: inizializziamo comunque
@@ -355,6 +362,7 @@ export default function Car360({
       (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
     } catch {}
     ensurePreload(); // su mobile i WebP dello scrub si scaricano da qui
+    setVideoNear(true); // l'utente sta interagendo: il video serve comunque
     draggingRef.current = true;
     const v = videoRef.current;
     // Presa "dal vivo": in riposo il frame corrente è il tempo del video, non
@@ -423,7 +431,7 @@ export default function Car360({
         onError={() => setFailed(true)}
         className="pointer-events-none absolute inset-0 h-full w-full object-contain"
       >
-        {videoNear && (
+        {videoActive && (
           <source
             src={`/home/spin/spin-loop.mp4?v=${SPIN_ASSET_VERSION}`}
             type="video/mp4"

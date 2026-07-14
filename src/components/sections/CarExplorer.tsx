@@ -33,8 +33,12 @@ const INITIAL = carSpots.find((s) => s.id === "lucidatura") ?? carSpots[0];
 export default function CarExplorer() {
   const reduce = useReducedMotion();
   // Su mobile/rete lenta i fotogrammi dei reveal (~15 MB in sei) si scaricano
-  // solo all'apertura, non all'ingresso in pagina.
-  const eagerPreload = useAllowHeavyPreload();
+  // solo all'apertura. Dove la banda c'è li precarichiamo, ma non prima che la
+  // sezione si avvicini: partendo subito ruberebbero rete all'hero, che è ciò
+  // che l'utente sta guardando davvero.
+  const allowHeavy = useAllowHeavyPreload();
+  const [stageNear, setStageNear] = useState(false);
+  const eagerPreload = allowHeavy && stageNear;
 
   // `targetFrame` = angolo verso cui l'auto ruota dolcemente (null = riposo /
   // auto-rotazione). `openId` = reveal attualmente aperto (null = nessuno);
@@ -113,6 +117,26 @@ export default function CarExplorer() {
       setOpenId(arming);
     }
   };
+
+  // Prossimità della sezione: sblocca il precarico dei reveal (una volta sola).
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setStageNear(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          setStageNear(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   // "Clicca fuori" per chiudere: press fuori dal palco e fuori dalla nav.
   useEffect(() => {

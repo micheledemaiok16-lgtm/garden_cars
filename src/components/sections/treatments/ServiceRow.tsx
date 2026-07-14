@@ -87,7 +87,11 @@ export function ServiceRow({
       ref={sectionRef}
       id={treatment.id}
       className={cn(
-        "relative scroll-mt-24 py-24 md:py-32",
+        // overflow-x-clip (non hidden): il glow decorativo sborda a sinistra e
+        // su mobile allargava la pagina di ~40px. `clip` taglia soltanto, senza
+        // creare un contenitore di scroll — le decorazioni che sporgono in
+        // verticale restano visibili e il parallasse continua a funzionare.
+        "relative scroll-mt-24 overflow-x-clip py-24 md:py-32",
         dark ? "bg-ink text-paper" : "bg-paper text-ink",
       )}
     >
