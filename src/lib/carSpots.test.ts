@@ -4,9 +4,16 @@ import { treatments } from "./treatments";
 import { SPIN } from "./carSpin";
 
 describe("carSpots", () => {
-  it("copre i 5 servizi mappati", () => {
+  it("copre i 6 servizi mappati", () => {
     expect(carSpots.map((s) => s.id).sort()).toEqual(
-      ["car-detailing", "centraline", "lucidatura", "restauro-pelle", "trattamento-vetri"].sort(),
+      [
+        "antifurto",
+        "car-detailing",
+        "centraline",
+        "lucidatura",
+        "restauro-pelle",
+        "trattamento-vetri",
+      ].sort(),
     );
   });
   it("ogni id esiste in treatments.ts", () => {

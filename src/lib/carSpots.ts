@@ -8,7 +8,8 @@ export type TreatmentId =
   | "lucidatura"
   | "restauro-pelle"
   | "trattamento-vetri"
-  | "car-detailing";
+  | "car-detailing"
+  | "antifurto";
 
 /**
  * Pallini dei servizi ancorati ai punti dell'auto lungo la rotazione. Ogni
@@ -86,6 +87,20 @@ export const carSpots: readonly CarSpot[] = [
       { frame: 120, x: 40, y: 73, visible: false },
       { frame: 132, x: 30, y: 72, visible: true },
       { frame: 142, x: 34, y: 72, visible: false },
+    ],
+  },
+  {
+    id: "antifurto",
+    label: "Antifurto",
+    anchorFrame: 136, // 3/4 anteriore sx, condiviso con "lucidatura" (scelta
+    // consapevole: da qui si vedono freccia anteriore, specchietto e fiancata,
+    // dove il lampeggio dell'allarme rende di più).
+    // NB: samples non più usati (pallini rimossi); tenuti in range come per
+    // le altre voci per un'eventuale reintroduzione futura.
+    samples: [
+      { frame: 120, x: 52, y: 54, visible: false },
+      { frame: 136, x: 42, y: 50, visible: true },
+      { frame: 142, x: 38, y: 48, visible: false },
     ],
   },
 ];
