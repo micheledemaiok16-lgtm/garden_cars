@@ -19,6 +19,13 @@ describe("getReveal", () => {
     expect(r?.anchorFrame).toBe(18);
     expect(r?.dir).toBe("/home/centralina-reveal");
   });
+  it("restituisce la config per antifurto (allarme in loop)", () => {
+    const r = getReveal("antifurto");
+    expect(r).toBeTruthy();
+    expect(r?.anchorFrame).toBe(136);
+    expect(r?.dir).toBe("/home/antifurto-reveal");
+    expect(r?.loop).toBe(true);
+  });
   it("undefined per id sconosciuti", () => {
     // Ormai tutti i servizi hanno un reveal: il caso "senza" resta solo
     // per id inesistenti (fallback silenzioso di CarDoorReveal).

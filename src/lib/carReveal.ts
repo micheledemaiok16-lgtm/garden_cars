@@ -121,6 +121,24 @@ export const reveals: readonly CarReveal[] = [
     openMs: 2965,
     closeMs: 1260,
   },
+  {
+    id: "antifurto",
+    anchorFrame: 136,
+    // 61 fotogrammi estratti dal clip seedance dell'allarme: le frecce del
+    // lato sinistro (anteriore, specchietto, posteriore) lampeggiano 2-3
+    // volte in arancio con riflesso sulla fiancata nera, poi si spengono
+    // (start = end, così il ping-pong non salta).
+    frameCount: 61,
+    dir: "/home/antifurto-reveal",
+    alt: "Frecce che lampeggiano: l'allarme antifurto segnala il tentativo di apertura",
+    // Effetto "di stato" → loop ping-pong come i vetri; hold un po' più
+    // lungo a frecce spente così il lampeggio arriva a ondate. Ritmi
+    // INDICATIVI (video a 4×): taratura finale sul clip reale in Task 5.
+    openMs: 1260,
+    closeMs: 1260,
+    loop: true,
+    loopHoldMs: 900,
+  },
 ];
 
 export function getReveal(id: string): CarReveal | undefined {
