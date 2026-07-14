@@ -475,14 +475,7 @@ export default function Car3D({
   // vecchio stage video (stesso contratto, children inclusi).
   if (failed) {
     return (
-      <Car360
-        initialFrame={initialFrame}
-        targetFrame={targetFrame}
-        reduce={reduce}
-        onFrameChange={onFrameChange}
-        onGrab={onGrab}
-        showHint={showHint}
-      >
+      <Car360 reduce={reduce} dimmed={false}>
         {children}
       </Car360>
     );

@@ -6,12 +6,9 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Reveal } from "@/components/ui/Reveal";
 import { treatments, type Treatment } from "@/lib/treatments";
 import { carSpots, type TreatmentId } from "@/lib/carSpots";
-import { frameDistance } from "@/lib/carSpin";
 import { getReveal, reveals } from "@/lib/carReveal";
 import { cn } from "@/lib/utils";
 import { useAllowHeavyPreload } from "@/lib/useMediaQuery";
-// TEMP: Car360 (video+WebP) al posto di Car3D per valutare la rigenerazione
-// degli asset — vedi Car3D per lo stage 3D. Ripristinare Car3D a valutazione fatta.
 import Car360 from "./Car360";
 import CarDoorReveal from "./CarDoorReveal";
 
@@ -24,11 +21,11 @@ function treatmentById(id: string): Treatment {
 const INITIAL = carSpots.find((s) => s.id === "lucidatura") ?? carSpots[0];
 
 /**
- * Sezione homepage "Esplora i servizi": l'Audi nera in VERO 3D (Car3D:
- * GLB + Three.js + GSAP) rotabile via trascinamento. Hover/tap su una voce
- * della ZoneNav evidenzia il servizio nel pannello e porta l'auto all'angolo
- * dove quella parte è meglio visibile. Geometria in carSpots.ts, frame logici
- * in carSpin.ts (Car3D mappa frame→angolo; Car360 resta come fallback).
+ * Sezione homepage "Esplora i servizi": l'Audi nera gira in un video in loop
+ * (Car360), passivo — non si trascina più. Il click su una voce della ZoneNav
+ * evidenzia il servizio nel pannello e, se quel servizio ha un reveal, lo apre:
+ * lo spin svanisce (`spinDimmed`) mentre il reveal compare, e riappare quando il
+ * reveal si è richiuso. Config dei reveal in carReveal.ts.
  */
 export default function CarExplorer() {
   const reduce = useReducedMotion();
@@ -40,82 +37,37 @@ export default function CarExplorer() {
   const [stageNear, setStageNear] = useState(false);
   const eagerPreload = allowHeavy && stageNear;
 
-  // `targetFrame` = angolo verso cui l'auto ruota dolcemente (null = riposo /
-  // auto-rotazione). `openId` = reveal attualmente aperto (null = nessuno);
-  // `doorInstant` = chiusura secca (drag). `armingRef` = reveal in attesa che
-  // la rotazione raggiunga la sua ancora: apri all'arrivo.
-  const [targetFrame, setTargetFrame] = useState<number | null>(null);
+  // `openId` = reveal attualmente aperto (null = nessuno). `spinDimmed` = il
+  // video dello spin è svanito. Sono stati DISTINTI perché la chiusura di un
+  // reveal ha una coda (lo scrub a ritroso, closeMs): lo spin deve restare
+  // nascosto finché il reveal non è tornato al frame 0 — lo dice `onDoorClosed`.
   const [activeId, setActiveId] = useState<string>(INITIAL.id);
-  const [touched, setTouched] = useState(false);
   const [openId, setOpenId] = useState<TreatmentId | null>(null);
-  const [doorInstant, setDoorInstant] = useState(false);
-  const armingRef = useRef<TreatmentId | null>(null);
-  const currentFrameRef = useRef<number>(INITIAL.anchorFrame);
+  const [spinDimmed, setSpinDimmed] = useState(false);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const navRef = useRef<HTMLUListElement | null>(null);
 
   const active = treatmentById(activeId);
 
-  // Chiusura del reveal: graceful (reverse dello scrub) o instant (drag).
-  const requestClose = (mode: "graceful" | "instant") => {
-    armingRef.current = null;
-    setDoorInstant(mode === "instant");
-    setOpenId(null); // targetFrame resta sull'ancora finché onDoorClosed non ripristina
-  };
   const onDoorClosed = () => {
-    setDoorInstant(false);
     // Switch diretto tra reveal (es. Interni→Motore): quando il vecchio finisce
-    // di chiudersi il nuovo è già aperto/armato — la SUA ancora deve restare.
-    if (openId !== null || armingRef.current) return;
-    setTargetFrame(null); // riprende l'auto-rotazione dall'ancora
+    // di chiudersi il nuovo è già in scena — lo spin deve restare nascosto.
+    if (openId !== null) return;
+    setSpinDimmed(false);
   };
 
-  // CLICK su una voce (unica via di attivazione: niente hover-preview): ruota
-  // all'ancora e poi apri; se già aperto, richiudi. Se era aperto un ALTRO
-  // reveal, si richiude da sé (open → false).
+  // CLICK su una voce (unica via di attivazione: niente hover-preview): apre il
+  // reveal, o lo richiude se era già aperto. Se era aperto un ALTRO reveal, si
+  // richiude da sé (open → false) mentre il nuovo compare.
   const activateReveal = (id: TreatmentId) => {
     setActiveId(id);
-    setTouched(true);
-    const reveal = getReveal(id);
-    if (!reveal) return;
+    if (!getReveal(id)) return;
     if (openId === id) {
-      requestClose("graceful");
+      setOpenId(null); // spinDimmed resta true finché onDoorClosed non lo spegne
       return;
     }
-    setDoorInstant(false);
-    setTargetFrame(reveal.anchorFrame);
-    // Se l'auto è GIÀ all'ancora, apri subito: handleFrame non scatterebbe
-    // perché il fotogramma non cambia più. Altrimenti arma e apri quando la
-    // rotazione raggiunge l'ancora.
-    if (Math.abs(frameDistance(currentFrameRef.current, reveal.anchorFrame)) < 1.5) {
-      armingRef.current = null;
-      setOpenId(id);
-    } else {
-      armingRef.current = id;
-      if (openId !== null) setOpenId(null);
-    }
-  };
-
-  // L'utente affronta l'auto (drag/press): chiudi subito e passa al trascinamento.
-  const handleGrab = () => {
-    if (openId !== null || armingRef.current) requestClose("instant");
-    armingRef.current = null;
-    setTargetFrame(null);
-    setTouched(true);
-  };
-
-  // Frame report dallo spin: quando la rotazione raggiunge l'ancora del reveal
-  // armato, aprilo. Non salva il fotogramma (nessun consumatore → niente
-  // re-render 60/s).
-  const handleFrame = (f: number) => {
-    currentFrameRef.current = f;
-    const arming = armingRef.current;
-    if (!arming) return;
-    const anchor = getReveal(arming)?.anchorFrame;
-    if (anchor !== undefined && Math.abs(frameDistance(f, anchor)) < 1.5) {
-      armingRef.current = null;
-      setOpenId(arming);
-    }
+    setOpenId(id);
+    setSpinDimmed(true);
   };
 
   // Prossimità della sezione: sblocca il precarico dei reveal (una volta sola).
@@ -143,9 +95,9 @@ export default function CarExplorer() {
     if (openId === null) return;
     const onDown = (e: globalThis.PointerEvent) => {
       const t = e.target as Node;
-      if (stageRef.current?.contains(t)) return; // press sull'auto: lo gestisce handleGrab
+      if (stageRef.current?.contains(t)) return;
       if (navRef.current?.contains(t)) return; // interazioni nav gestite dai loro handler
-      requestClose("graceful");
+      setOpenId(null);
     };
     document.addEventListener("pointerdown", onDown, true);
     return () => document.removeEventListener("pointerdown", onDown, true);
@@ -181,8 +133,7 @@ export default function CarExplorer() {
             </Reveal>
             <Reveal delay={0.1}>
               <p className="mt-5 max-w-md text-paper/70">
-                Trascina per ruotare l&apos;auto e vai dritto al trattamento che
-                ti interessa.
+                Scegli un trattamento e guardalo all&apos;opera sull&apos;auto.
               </p>
             </Reveal>
           </div>
@@ -203,14 +154,7 @@ export default function CarExplorer() {
 
         <div className="mt-12 grid items-center gap-8 lg:mt-16 lg:grid-cols-[1.75fr_0.9fr] lg:gap-10">
           <div ref={stageRef}>
-            <Car360
-              initialFrame={INITIAL.anchorFrame}
-              targetFrame={targetFrame}
-              reduce={reduce}
-              onFrameChange={handleFrame}
-              onGrab={handleGrab}
-              showHint={!touched}
-            >
+            <Car360 reduce={reduce} dimmed={spinDimmed}>
               {/* Un overlay per reveal, sempre montati: ognuno apre/chiude in
                   autonomia (openId) e a riposo non consuma nulla (loop rAF
                   spento, fotogrammi non precaricati se non eagerPreload). */}
@@ -219,7 +163,6 @@ export default function CarExplorer() {
                   key={r.id}
                   revealId={r.id}
                   open={openId === r.id}
-                  instant={doorInstant}
                   reduce={reduce}
                   eagerPreload={eagerPreload}
                   onClosed={onDoorClosed}

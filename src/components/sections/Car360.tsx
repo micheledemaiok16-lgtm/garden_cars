@@ -1,260 +1,52 @@
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  type PointerEvent,
-  type ReactNode,
-} from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  SPIN,
-  SPIN_ASSET_VERSION,
-  frameIndex,
-  normalizeFrame,
-} from "@/lib/carSpin";
-import { useAllowHeavyPreload } from "@/lib/useMediaQuery";
-// La dissolvenza dei bordi verso il nero (#000) della sezione è BAKATA negli
-// asset (video e WebP hanno una rampa verso il nero sui 4 lati): niente overlay
-// né CSS mask sul <video> — la mask disattiverebbe il compositing accelerato
-// dalla GPU e renderebbe la rotazione scattosa.
-// Sensibilità del trascinamento: pixel per "fotogramma logico" (base 144).
-const PX_PER_FRAME = 7;
-// Velocità di riproduzione in riposo. Il video è un giro 360° completo (loop
-// vero) di ~12 s. Lo riproduciamo a velocità NATIVA (1.0): un rate ≠ 1
-// introduce micro-scatti (judder) perché il browser ricampiona i fotogrammi
-// contro il refresh a 60 Hz del monitor. Per cambiare ritmo, rigenerare il
-// video più lungo/corto invece di toccare questo numero.
-const AUTO_RATE = 1.0;
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { SPIN_ASSET_VERSION } from "@/lib/carSpin";
 
-// Base logica dei fotogrammi: il giro è continuo (wrap), il fotogramma logico
-// "gira" senza fermarsi agli estremi. wrapFrame tiene un valore (anche
-// frazionario) in [0, FC); imgIndex dà l'indice intero 0..FC-1 del WebP.
-const FC = SPIN.frameCount;
-const wrapFrame = (f: number) => normalizeFrame(f, FC, true);
-const imgIndex = (f: number) => frameIndex(f, FC, true);
+// Deve combaciare con FADE_MS di CarDoorReveal (300 ms): le due dissolvenze si
+// incrociano — lo spin svanisce mentre il reveal compare, così non si vedono
+// mai due auto ad angoli diversi sovrapposte.
+const FADE_MS = 300;
 
 /**
- * Stage rotabile dell'auto basato su un VIDEO nativo: fluido a qualunque
- * velocità e leggero in RAM (decodifica un fotogramma per volta). Il file è un
- * loop 360° vero (start=end): riprodotto in loop gira all'infinito senza scatto.
+ * Stage dell'auto: un VIDEO in loop, PASSIVO. Il file è un giro 360° vero
+ * (start=end), riprodotto a velocità nativa (playbackRate 1.0: un rate ≠ 1
+ * introduce judder contro il refresh del monitor). Nessuna interazione, nessun
+ * loop rAF, nessun seek: il browser lo compone in GPU e basta.
  *
- * Modalità: riposo → il video va in play (auto-rotazione, ritmo = AUTO_RATE);
- * trascinamento → video in pausa, `currentTime` pilotato dal puntatore;
- * selezione servizio (`targetFrame`) → tween del `currentTime` verso l'angolo;
- * `reduce` → fermo sul fotogramma iniziale.
+ * `dimmed` (= un reveal è in scena) lo fa svanire; il video però continua a
+ * girare sotto, così alla chiusura del reveal riappare già in movimento.
  *
- * Il "fotogramma logico" (0..FC-1, base 144) è ricavato dal `currentTime` in
- * modo lineare e wrappato (giro continuo), e passato al genitore via
- * onFrameChange, così i pallini seguono l'auto senza dipendere dalle immagini.
+ * La dissolvenza dei bordi verso il nero (#000) della sezione è BAKATA
+ * nell'asset: niente overlay né CSS mask sul <video> — la mask disattiverebbe
+ * il compositing accelerato dalla GPU.
  */
 export default function Car360({
-  initialFrame,
-  targetFrame,
   reduce,
-  onFrameChange,
-  onGrab,
-  showHint,
+  dimmed,
   children,
 }: {
-  initialFrame: number;
-  targetFrame: number | null;
   reduce: boolean | null;
-  onFrameChange: (f: number) => void;
-  onGrab: () => void;
-  showHint: boolean;
+  dimmed: boolean;
   children?: ReactNode;
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const imgRef = useRef<HTMLImageElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
-  const periodRef = useRef(0); // durata del video = un giro 360° completo
-  const frameRef = useRef(wrapFrame(initialFrame));
-  const draggingRef = useRef(false);
-  const dragRef = useRef<{ startX: number; startFrame: number } | null>(null);
-  const targetRef = useRef<number | null>(targetFrame);
-  const reduceRef = useRef<boolean>(!!reduce);
-  const inViewRef = useRef(true);
-  const lastIdxRef = useRef(imgIndex(initialFrame));
-  // Precarico dei 144 WebP usati per lo scrubbing (drag/tween). Tenuti vivi in
-  // un ref così il browser non li scarta: allo swap sono già in cache.
-  const preloadRef = useRef<HTMLImageElement[]>([]);
-  const lastImgIdxRef = useRef(-1); // ultimo frame mostrato nell'overlay img
-  const overlayRef = useRef(false); // true = mostro img (scrub), false = video
-  // Uscita da scrub in corso: il video sta "cercando" (seek) il frame corrente.
-  // L'img resta visibile come ponte finché il seek non è completato ('seeked'),
-  // altrimenti si vedrebbe per un attimo il vecchio frame del video (il seek in
-  // un mp4 è lento). `resyncCancel` annulla il ponte se riparte un drag.
-  const resyncPendingRef = useRef(false);
-  const resyncCancelRef = useRef<(() => void) | null>(null);
-  const preloadStartedRef = useRef(false);
-
-  const [failed, setFailed] = useState(false);
   // Il video (4,7 MB) viene agganciato solo quando la sezione si avvicina al
-  // viewport: chi non scorre fin qui non lo scarica affatto.
-  const [videoNear, setVideoNear] = useState(false);
-  const allowHeavyPreload = useAllowHeavyPreload();
+  // viewport: chi non scorre fin qui non lo scarica affatto. Una volta sola:
+  // `near` non torna mai a false, o riscaricheremmo il file a ogni passaggio.
+  const [near, setNear] = useState(false);
 
-  // fotogramma logico → istante nel video (loop lineare: FC fotogrammi sull'intera durata).
-  const frameToTime = (f: number) =>
-    periodRef.current > 0 ? (wrapFrame(f) / FC) * periodRef.current : 0;
-  // istante → fotogramma logico (lineare, wrappato per il giro continuo).
-  const timeToFrame = (t: number) => {
-    const period = periodRef.current;
-    if (period <= 0) return frameRef.current;
-    return wrapFrame((t / period) * FC);
-  };
-
-  // Precarico dei 144 fotogrammi WebP (3,6 MB): durante il trascinamento (o il
-  // tween verso un servizio) mostriamo l'immagine invece di far "cercare" il
-  // video — il seek in un mp4 compresso è a scatti, l'immagine è istantanea.
-  // Su desktop lo facciamo in anticipo; su mobile/rete lenta solo alla PRIMA
-  // interazione che ne ha bisogno, per non bruciare megabyte a chi guarda e
-  // basta. I riferimenti restano vivi in un ref così il browser non li scarta.
-  const ensurePreload = () => {
-    if (preloadStartedRef.current) return;
-    preloadStartedRef.current = true;
-    const imgs: HTMLImageElement[] = [];
-    for (let i = 0; i < FC; i++) {
-      const im = new Image();
-      im.src = SPIN.srcFor(i);
-      imgs.push(im);
-    }
-    preloadRef.current = imgs;
-  };
-
-  // Il video va agganciato quando la sezione si avvicina, ma anche appena c'è un
-  // `targetFrame`: il tween misura il tempo sulla durata del video, e senza di
-  // essa l'auto non ruoterebbe e il reveal non si aprirebbe mai.
-  const videoActive = videoNear || targetFrame !== null;
-
-  // Anche dove la banda c'è, non prima che la sezione si avvicini: in cima alla
-  // pagina questi 3,6 MB competerebbero con il video dell'hero.
-  useEffect(() => {
-    if (allowHeavyPreload && videoActive) ensurePreload();
-  }, [allowHeavyPreload, videoActive]);
-
-  // Il tween verso l'angolo di un servizio scrubba i WebP: servono adesso.
-  useEffect(() => {
-    if (targetFrame !== null) ensurePreload();
-  }, [targetFrame]);
-
-  // Aggiorna l'overlay: img visibile (scrub) o video visibile (riposo), e sorgente
-  // dell'img al frame logico corrente. Manipolazione diretta del DOM per non
-  // ri-renderizzare a ogni frame.
-  const applyOverlay = (active: boolean) => {
-    const v = videoRef.current;
-    const img = imgRef.current;
-    if (!v || !img) return;
-
-    if (active) {
-      // Entrata/permanenza in scrub: img subito visibile, video nascosto. Un
-      // eventuale ponte di ri-sincronizzazione va annullato: un nuovo grab non
-      // deve farsi "spegnere" l'img da un vecchio 'seeked' ancora pendente.
-      resyncCancelRef.current?.();
-      if (!overlayRef.current) {
-        overlayRef.current = true;
-        img.style.opacity = "1";
-        v.style.opacity = "0";
-      }
-      const idx = imgIndex(frameRef.current);
-      if (idx !== lastImgIdxRef.current) {
-        lastImgIdxRef.current = idx;
-        img.src = SPIN.srcFor(idx);
-      }
-      return;
-    }
-
-    // Uscita da scrub → torniamo al video. NON scambiare subito le opacità: il
-    // video è fermo al frame d'inizio drag e il seek verso il frame corrente è
-    // lento (mp4), quindi mostrarlo ora rivelerebbe il vecchio frame. Teniamo
-    // l'img come ponte finché il video non ha raggiunto il frame ('seeked').
-    if (!overlayRef.current || resyncPendingRef.current) return;
-    if (periodRef.current <= 0) {
-      overlayRef.current = false;
-      img.style.opacity = "0";
-      v.style.opacity = "1";
-      return;
-    }
-
-    const target = frameToTime(frameRef.current);
-    const commitSwap = () => {
-      if (draggingRef.current) return; // ripartito un drag: non toccare nulla
-      overlayRef.current = false;
-      img.style.opacity = "0";
-      v.style.opacity = "1";
-    };
-
-    // Già al frame giusto e decodificato → swap immediato (nessun lampo).
-    if (Math.abs(v.currentTime - target) < 0.02 && v.readyState >= 2) {
-      commitSwap();
-      return;
-    }
-
-    // Seek + attesa del frame decodificato, con timeout di sicurezza (se il
-    // browser non emette 'seeked', non lasciamo l'img bloccata sopra).
-    resyncPendingRef.current = true;
-    let done = false;
-    const cleanup = () => {
-      done = true;
-      v.removeEventListener("seeked", onSeeked);
-      clearTimeout(to);
-      resyncPendingRef.current = false;
-      resyncCancelRef.current = null;
-    };
-    const onSeeked = () => {
-      if (done) return;
-      cleanup();
-      commitSwap();
-    };
-    const to = setTimeout(onSeeked, 400);
-    resyncCancelRef.current = () => {
-      if (!done) cleanup(); // annullato da un nuovo drag: niente swap
-    };
-    v.addEventListener("seeked", onSeeked);
-    try {
-      v.currentTime = target;
-    } catch {
-      onSeeked();
-    }
-  };
-
-  // Tiene i ref allineati alle prop senza far ripartire il loop.
-  useEffect(() => {
-    targetRef.current = targetFrame;
-  }, [targetFrame]);
-  useEffect(() => {
-    reduceRef.current = !!reduce;
-  }, [reduce]);
-
-  // Pausa quando la sezione è fuori dal viewport.
   useEffect(() => {
     const el = boxRef.current;
     if (!el || typeof IntersectionObserver === "undefined") {
-      setVideoNear(true); // niente IO (browser antico): carica e vai
+      setNear(true); // niente IO (browser antico): carica e vai
       return;
     }
     const io = new IntersectionObserver(
       ([e]) => {
-        inViewRef.current = e.isIntersecting;
-      },
-      { threshold: 0.15 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  // Aggancio del video solo in prossimità del viewport (un'ampia fascia di
-  // margine così arriva già pronto), e una volta sola: `videoNear` non torna
-  // mai a false, altrimenti riscaricheremmo il file a ogni passaggio.
-  useEffect(() => {
-    const el = boxRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(
-      ([e]) => {
         if (e.isIntersecting) {
-          setVideoNear(true);
+          setNear(true);
           io.disconnect();
         }
       },
@@ -267,151 +59,39 @@ export default function Car360({
   // Aggiungere un <source> a un <video> già montato non fa partire il download
   // da solo: va chiesto esplicitamente con load().
   useEffect(() => {
-    if (videoActive) videoRef.current?.load();
-  }, [videoActive]);
+    if (near) videoRef.current?.load();
+  }, [near]);
 
-  // Se il video è già in cache al mount, l'evento loadedmetadata può essere già
-  // passato prima che il gestore si agganci: inizializziamo comunque
-  // durata/velocità/posizione così pallini e ritmo funzionano lo stesso.
+  // Fuori dal viewport il video va in pausa (niente decodifica a vuoto).
+  // Con prefers-reduced-motion non parte mai: resta il poster.
   useEffect(() => {
-    const v = videoRef.current;
-    if (v && v.readyState >= 1 && periodRef.current === 0) {
-      periodRef.current = v.duration;
-      v.playbackRate = AUTO_RATE;
-      try {
-        v.currentTime = frameToTime(frameRef.current);
-      } catch {}
-    }
-  }, []);
-
-  // Loop: pilota/legge il video secondo la modalità e riporta il frame logico.
-  useEffect(() => {
-    let raf = 0;
-    const tick = () => {
-      const v = videoRef.current;
-      if (v && periodRef.current > 0) {
-        if (!inViewRef.current) {
-          if (!v.paused) v.pause();
-        } else if (draggingRef.current) {
-          // frameRef pilotato da onPointerMove; overlay img mostra il frame
-          if (!v.paused) v.pause();
-          applyOverlay(true);
-        } else if (targetRef.current !== null) {
-          // tween in spazio-fotogramma verso l'angolo del servizio; niente seek
-          // video (che sarebbe a scatti) → mostriamo l'img del frame interpolato.
-          // Il giro è un loop: il delta segue il percorso angolare più corto,
-          // anche attraverso la giunzione 143→0.
-          if (!v.paused) v.pause();
-          const tf = targetRef.current;
-          const cf = frameRef.current;
-          const delta = ((((tf - cf + FC / 2) % FC) + FC) % FC) - FC / 2;
-          frameRef.current =
-            Math.abs(delta) < 0.5 || reduceRef.current
-              ? wrapFrame(tf)
-              : wrapFrame(cf + delta * 0.15);
-          applyOverlay(true);
-        } else if (reduceRef.current) {
-          if (!v.paused) v.pause();
-          applyOverlay(true);
+    const el = boxRef.current;
+    if (!el || reduce || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        const v = videoRef.current;
+        if (!v) return;
+        if (e.isIntersecting) {
+          const p = v.play();
+          if (p && typeof p.catch === "function") p.catch(() => {});
         } else {
-          // riposo: auto-rotazione (il video avanza da solo, loop 360° continuo)
-          applyOverlay(false);
-          if (v.playbackRate !== AUTO_RATE) v.playbackRate = AUTO_RATE;
-          if (v.paused) {
-            const p = v.play();
-            if (p && typeof p.catch === "function") p.catch(() => {});
-          }
-          // Durante il ponte di ri-sincronizzazione (img ancora sopra) il
-          // currentTime è ancora quello vecchio: non pilotare frameRef finché
-          // il video non è davvero in scena, o i pallini/reveal salterebbero.
-          if (!resyncPendingRef.current) {
-            frameRef.current = timeToFrame(v.currentTime);
-          }
+          v.pause();
         }
-        const idx = imgIndex(frameRef.current);
-        if (idx !== lastIdxRef.current) {
-          lastIdxRef.current = idx;
-          onFrameChange(frameRef.current);
-        }
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(raf);
-      resyncCancelRef.current?.(); // smonta il ponte + il listener 'seeked'
-    };
-    // applyOverlay/frameToTime leggono solo ref: la closure iniziale resta valida.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onFrameChange]);
-
-  const onLoadedMetadata = () => {
-    const v = videoRef.current;
-    if (!v) return;
-    periodRef.current = v.duration;
-    v.playbackRate = AUTO_RATE;
-    try {
-      v.currentTime = frameToTime(frameRef.current);
-    } catch {}
-  };
-
-  const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
-    // La cattura può fallire (pointer non più attivo, quirks di alcuni
-    // browser): il trascinamento deve partire lo stesso.
-    try {
-      (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
-    } catch {}
-    ensurePreload(); // su mobile i WebP dello scrub si scaricano da qui
-    setVideoNear(true); // l'utente sta interagendo: il video serve comunque
-    draggingRef.current = true;
-    const v = videoRef.current;
-    // Presa "dal vivo": in riposo il frame corrente è il tempo del video, non
-    // l'ultimo tick rAF (che può essere in ritardo se il thread è sotto carico).
-    if (v && !overlayRef.current && periodRef.current > 0) {
-      frameRef.current = timeToFrame(v.currentTime);
-    }
-    if (v && !v.paused) v.pause();
-    dragRef.current = { startX: e.clientX, startFrame: frameRef.current };
-    applyOverlay(true); // mostra subito l'img per non far comparire un frame video
-    onGrab();
-  };
-
-  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-    if (!draggingRef.current || !dragRef.current) return;
-    const dx = e.clientX - dragRef.current.startX;
-    const next = wrapFrame(dragRef.current.startFrame + dx / PX_PER_FRAME);
-    frameRef.current = next;
-    applyOverlay(true); // aggiorna l'img del frame trascinato (istantanea)
-    const idx = imgIndex(next);
-    if (idx !== lastIdxRef.current) {
-      lastIdxRef.current = idx;
-      onFrameChange(next);
-    }
-  };
-
-  const endDrag = (e: PointerEvent<HTMLDivElement>) => {
-    if (draggingRef.current) {
-      try {
-        (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
-      } catch {}
-    }
-    draggingRef.current = false;
-    dragRef.current = null;
-  };
+      },
+      { threshold: 0.15 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [reduce]);
 
   return (
-    // touch-pan-y (non touch-none): il trascinamento orizzontale ruota l'auto,
-    // ma il dito deve poter comunque scorrere la pagina in verticale — con
-    // touch-none lo stage diventa una trappola per il gesto su mobile.
+    // Niente touch-none / cursor-grab: lo stage non è più interattivo, il dito
+    // ci scorre sopra come su qualunque altra parte della pagina.
     // L'auto in 16/9 su un telefono sarebbe alta ~210px: sotto sm passiamo a
     // 4/3, che le dà spazio reale senza sfondare il viewport.
     <div
       ref={boxRef}
-      className="relative aspect-[4/3] w-full cursor-grab touch-pan-y select-none active:cursor-grabbing sm:aspect-[16/9]"
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={endDrag}
-      onPointerCancel={endDrag}
+      className="relative aspect-[4/3] w-full select-none sm:aspect-[16/9]"
     >
       <div
         aria-hidden
@@ -427,11 +107,13 @@ export default function Car360({
         preload="auto"
         poster={`/home/spin/spin-poster.webp?v=${SPIN_ASSET_VERSION}`}
         aria-label="Audi nera Garden's Cars che ruota su fondo scuro"
-        onLoadedMetadata={onLoadedMetadata}
-        onError={() => setFailed(true)}
         className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+        style={{
+          opacity: dimmed ? 0 : 1,
+          transition: `opacity ${FADE_MS}ms ease`,
+        }}
       >
-        {videoActive && (
+        {near && (
           <source
             src={`/home/spin/spin-loop.mp4?v=${SPIN_ASSET_VERSION}`}
             type="video/mp4"
@@ -439,35 +121,7 @@ export default function Car360({
         )}
       </video>
 
-      {/* Overlay per lo scrubbing: durante drag/tween mostra il fotogramma WebP
-          (swap istantaneo, niente seek video). Nascosto in riposo. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        ref={imgRef}
-        src={SPIN.srcFor(imgIndex(initialFrame))}
-        alt=""
-        aria-hidden
-        draggable={false}
-        className="pointer-events-none absolute inset-0 h-full w-full object-contain"
-        style={{ opacity: 0 }}
-      />
-
       {children}
-
-      <AnimatePresence>
-        {showHint && !failed && (
-          <motion.div
-            aria-hidden
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            style={{ borderColor: "rgba(245,244,240,0.15)" }}
-            className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full border bg-ink/70 px-4 py-2 font-display text-xs uppercase tracking-widest text-paper/70 backdrop-blur"
-          >
-            Trascina per ruotare
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
