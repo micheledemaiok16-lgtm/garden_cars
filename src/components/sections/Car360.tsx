@@ -93,11 +93,6 @@ export default function Car360({
       ref={boxRef}
       className="relative aspect-[4/3] w-full select-none sm:aspect-[16/9]"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-[8%] bottom-[5%] h-[12%] rounded-[50%] bg-black/70 blur-2xl"
-      />
-
       <video
         ref={videoRef}
         muted
@@ -120,6 +115,21 @@ export default function Car360({
           />
         )}
       </video>
+
+      {/* Vignettatura: spegne verso il nero (#000, lo stesso a cui sfuma il
+          video) l'alone del "pavimento studio" bakato nell'asset — visibile
+          come una striscia chiara sotto e di lato all'auto, tanto più a bassi
+          zoom. È un semplice div SOPRA il <video>, NON una CSS mask sul video
+          (quella spegnerebbe il compositing GPU e riporterebbe il judder). Il
+          centro resta trasparente, così l'auto non si scurisce. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(115% 88% at 50% 44%, transparent 56%, #000 84%)",
+        }}
+      />
 
       {children}
     </div>

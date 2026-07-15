@@ -30,24 +30,27 @@ export default function Intro() {
           </Reveal>
           <Reveal delay={0.05}>
             <h2 className="display-xl mt-5">
-              Un&apos;officina di passione,
+              Da un garage sotto casa
               <br />
-              non un semplice piazzale.
+              a una passione che cresce.
             </h2>
           </Reveal>
           <Reveal delay={0.1}>
             <p className="mt-7 max-w-xl text-lg leading-relaxed text-paper/70">
-              Da Giffoni Valle Piana selezioniamo ogni vettura come fosse per noi:
-              auto nuove pronte alla consegna e usato garantito, controllato in ogni
-              dettaglio. Crediamo che un&apos;auto si scelga con gli occhi e si ami al
-              primo contatto con i suoi interni.
+              <strong className="font-semibold text-paper">Garden&apos;s Cars</strong> nasce
+              nel 2018 da un sogno e dalla passione di{" "}
+              <strong className="font-semibold text-paper">Ottavio Tedesco</strong>{" "}
+              per le automobili. Tutto &egrave; iniziato in un piccolo
+              garage sotto casa, con il solo servizio di oscuramento vetri e tanta
+              determinazione.
             </p>
           </Reveal>
           <Reveal delay={0.15}>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-paper/70">
-              Per questo abbiamo fatto della cura della pelle e dei sedili una vera
-              specialità: pulizia, rigenerazione e protezione che restituiscono
-              all&apos;abitacolo l&apos;aspetto e il profumo del primo giorno.
+              Oggi quella passione si &egrave; trasformata in una realt&agrave; solida
+              che offre vendita di auto nuove, usate e km 0, noleggio e servizi di
+              personalizzazione e cura dell&apos;auto, con l&apos;obiettivo di garantire
+              qualit&agrave;, affidabilit&agrave; e attenzione ad ogni cliente.
             </p>
           </Reveal>
           <Reveal delay={0.2}>

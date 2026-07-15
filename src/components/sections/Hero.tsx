@@ -102,6 +102,17 @@ export default function Hero() {
         <div className="absolute inset-0 bg-gradient-to-t from-ink via-transparent to-ink/30" />
       </motion.div>
 
+      {/* Raccordo inferiore ANCORATO alla sezione (non al layer in parallasse):
+          lo sfondo si estende oltre il bordo di taglio e, scorrendo, la sua
+          sfumatura scura scivola via lasciando una linea netta dell'auto contro
+          il nero di #chi-siamo. Questa sfumatura verso --ink resta fissa al
+          fondo dell'hero e cuce sempre il confine, in qualunque punto dello
+          scroll. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-40 bg-gradient-to-b from-transparent to-ink"
+      />
+
       {/* Glow racing green */}
       <div className="glow-racing pointer-events-none absolute -left-40 top-1/3 -z-10 h-[40rem] w-[40rem] opacity-40 blur-3xl" />
 
