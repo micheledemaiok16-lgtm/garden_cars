@@ -45,7 +45,12 @@ export default function Hero() {
     target: ref,
     offset: ["start start", "end start"],
   });
-  const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "22%"]);
+  // NB: niente parallasse scroll-linked sullo SFONDO. framer-motion applica il
+  // transform su rAF, con un frame di ritardo rispetto allo scroll del
+  // compositor: durante lo scroll lo sfondo restava disallineato per un istante
+  // e, al bordo di taglio della sezione, scopriva una linea luminosa dell'auto
+  // che "scorreva". Lo sfondo ora è fermo (il reveal scale/blur è guidato da
+  // stato, non da scroll, quindi non ha questo problema).
   // Il contenuto sale leggermente con lo scroll (parallasse naturale, verso
   // l'alto): così i pulsanti in basso non vengono spinti fuori dallo schermo.
   const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "-12%"]);
@@ -64,7 +69,6 @@ export default function Hero() {
     >
       {/* Sfondo: video del reveal (telo) → poi sfuma. Statico con reduced-motion. */}
       <motion.div
-        style={reduce ? undefined : { y: bgY }}
         animate={{
           filter: shown
             ? "blur(7px) brightness(0.5)"
