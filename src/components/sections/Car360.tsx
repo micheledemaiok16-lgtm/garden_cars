@@ -32,6 +32,9 @@ export default function Car360({
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
+  // Se lo stage è nel viewport (aggiornato dall'observer di play/pausa): la
+  // ripresa dopo lo scroll deve avvenire solo se l'auto è ancora visibile.
+  const inViewRef = useRef(false);
   // Il video (4,7 MB) viene agganciato solo quando la sezione si avvicina al
   // viewport: chi non scorre fin qui non lo scarica affatto. Una volta sola:
   // `near` non torna mai a false, o riscaricheremmo il file a ogni passaggio.
@@ -69,6 +72,7 @@ export default function Car360({
     if (!el || reduce || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(
       ([e]) => {
+        inViewRef.current = e.isIntersecting;
         const v = videoRef.current;
         if (!v) return;
         if (e.isIntersecting) {
@@ -82,6 +86,35 @@ export default function Car360({
     );
     io.observe(el);
     return () => io.disconnect();
+  }, [reduce]);
+
+  // Il <video> in riproduzione si "strappa" (tearing) mentre la PAGINA scorre:
+  // Chrome ricompone il layer video contro lo scorrimento e lascia una banda
+  // orizzontale che scorre sotto l'auto. Si vede solo con lo spin visibile (a
+  // reveal chiuso), non quando un'immagine statica lo copre. Rimedio
+  // indipendente da GPU/driver: METTERE IN PAUSA il video durante lo scroll e
+  // riprenderlo appena ci si ferma. Un fotogramma fermo non si ricompone → la
+  // banda sparisce. Nessun seek (currentTime intatto) → niente lampo del frame.
+  useEffect(() => {
+    if (reduce || typeof window === "undefined") return;
+    let idle = 0;
+    const onScroll = () => {
+      const v = videoRef.current;
+      if (v && !v.paused) v.pause();
+      clearTimeout(idle);
+      idle = window.setTimeout(() => {
+        const v2 = videoRef.current;
+        if (v2 && inViewRef.current) {
+          const p = v2.play();
+          if (p && typeof p.catch === "function") p.catch(() => {});
+        }
+      }, 160);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      clearTimeout(idle);
+    };
   }, [reduce]);
 
   return (
