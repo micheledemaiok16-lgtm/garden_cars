@@ -35,6 +35,11 @@ export default function Car360({
   // Se lo stage è nel viewport (aggiornato dall'observer di play/pausa): la
   // ripresa dopo lo scroll deve avvenire solo se l'auto è ancora visibile.
   const inViewRef = useRef(false);
+  // Snapshot del fotogramma corrente, mostrato AL POSTO del video durante lo
+  // scroll (vedi effetto sotto). `frozen` = snapshot attivo (una volta per
+  // gesto di scroll).
+  const snapRef = useRef<HTMLCanvasElement | null>(null);
+  const frozenRef = useRef(false);
   // Il video (4,7 MB) viene agganciato solo quando la sezione si avvicina al
   // viewport: chi non scorre fin qui non lo scarica affatto. Una volta sola:
   // `near` non torna mai a false, o riscaricheremmo il file a ogni passaggio.
@@ -89,26 +94,54 @@ export default function Car360({
   }, [reduce]);
 
   // Il <video> in riproduzione si "strappa" (tearing) mentre la PAGINA scorre:
-  // Chrome ricompone il layer video contro lo scorrimento e lascia una banda
-  // orizzontale che scorre sotto l'auto. Si vede solo con lo spin visibile (a
-  // reveal chiuso), non quando un'immagine statica lo copre. Rimedio
-  // indipendente da GPU/driver: METTERE IN PAUSA il video durante lo scroll e
-  // riprenderlo appena ci si ferma. Un fotogramma fermo non si ricompone → la
-  // banda sparisce. Nessun seek (currentTime intatto) → niente lampo del frame.
+  // Chrome muove/ricompone il layer video contro lo scorrimento e lascia una
+  // banda orizzontale che scorre sotto l'auto. Si vede SOLO con lo spin visibile
+  // (a reveal chiuso), non quando un'immagine statica lo copre (prova: coi
+  // reveal aperti la banda sparisce). Mettere in pausa il video NON basta: il
+  // layer video si ricompone comunque. Rimedio indipendente da GPU/driver:
+  // durante lo scroll COPRIRE il video con uno SNAPSHOT statico del fotogramma
+  // corrente (un <canvas>, come i frame WebP dei reveal → non si strappa). Il
+  // video sotto viene messo in pausa, quindi alla ripresa riparte dallo stesso
+  // frame dello snapshot: nessun salto. Un canvas fermo si compone pulito.
   useEffect(() => {
     if (reduce || typeof window === "undefined") return;
+    // Canvas nascosto a riposo (opacità gestita qui, non da React).
+    if (snapRef.current) snapRef.current.style.opacity = "0";
     let idle = 0;
-    const onScroll = () => {
+    const freeze = () => {
       const v = videoRef.current;
-      if (v && !v.paused) v.pause();
-      clearTimeout(idle);
-      idle = window.setTimeout(() => {
-        const v2 = videoRef.current;
-        if (v2 && inViewRef.current) {
-          const p = v2.play();
-          if (p && typeof p.catch === "function") p.catch(() => {});
+      const c = snapRef.current;
+      if (!v || !c || frozenRef.current) return;
+      if (v.readyState >= 2 && v.videoWidth) {
+        try {
+          if (c.width !== v.videoWidth) c.width = v.videoWidth;
+          if (c.height !== v.videoHeight) c.height = v.videoHeight;
+          c.getContext("2d")?.drawImage(v, 0, 0, c.width, c.height);
+          c.style.opacity = "1"; // copre il video (frame identico → invisibile)
+          v.pause();
+          frozenRef.current = true;
+        } catch {
+          // canvas "tainted" o draw fallito: ripiego sulla sola pausa
+          v.pause();
         }
-      }, 160);
+      } else {
+        v.pause();
+      }
+    };
+    const thaw = () => {
+      const v = videoRef.current;
+      const c = snapRef.current;
+      frozenRef.current = false;
+      if (c) c.style.opacity = "0";
+      if (v && inViewRef.current && !document.hidden) {
+        const p = v.play();
+        if (p && typeof p.catch === "function") p.catch(() => {});
+      }
+    };
+    const onScroll = () => {
+      freeze();
+      clearTimeout(idle);
+      idle = window.setTimeout(thaw, 140);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
@@ -159,6 +192,18 @@ export default function Car360({
           />
         )}
       </video>
+
+      {/* Snapshot del fotogramma corrente: opacity 0 a riposo, portato a 1
+          durante lo scroll (vedi effetto anti-tearing) per coprire il <video>
+          con un'immagine STATICA che non si strappa. Stesso object-contain del
+          video → si sovrappone pixel-per-pixel. */}
+      {/* Opacità gestita SOLO imperativamente (freeze/thaw): niente `opacity`
+          nel JSX, o React la reimposterebbe a 0 vanificando la copertura. */}
+      <canvas
+        ref={snapRef}
+        aria-hidden
+        className="pointer-events-none absolute inset-0 h-full w-full object-contain"
+      />
 
       {/* Vignettatura: spegne verso il nero (#000, lo stesso a cui sfuma il
           video) tutto il "pavimento studio" bakato nell'asset — non solo
