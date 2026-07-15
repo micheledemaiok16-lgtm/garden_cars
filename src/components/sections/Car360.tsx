@@ -117,17 +117,21 @@ export default function Car360({
       </video>
 
       {/* Vignettatura: spegne verso il nero (#000, lo stesso a cui sfuma il
-          video) l'alone del "pavimento studio" bakato nell'asset — visibile
-          come una striscia chiara sotto e di lato all'auto, tanto più a bassi
-          zoom. È un semplice div SOPRA il <video>, NON una CSS mask sul video
-          (quella spegnerebbe il compositing GPU e riporterebbe il judder). Il
-          centro resta trasparente, così l'auto non si scurisce. */}
+          video) tutto il "pavimento studio" bakato nell'asset — non solo
+          l'alone diffuso, ma soprattutto l'ANELLO della piattaforma girevole
+          che si vede sul pavimento e sembra "muoversi" mentre l'auto ruota.
+          L'anello è vicino all'auto, quindi la sfumatura parte stretta
+          (trasparente fino al 34%, nero pieno al 66%): abbastanza aggressiva da
+          coprire l'anello a ogni angolo, ma tarata a vista su muso/fiancata/tre
+          quarti perché non intacchi carrozzeria e ruote. È un div SOPRA il
+          <video>, NON una CSS mask sul video (quella spegnerebbe il compositing
+          GPU e riporterebbe il judder). */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(115% 88% at 50% 44%, transparent 56%, #000 84%)",
+            "radial-gradient(88% 72% at 50% 40%, transparent 34%, #000 66%)",
         }}
       />
 
