@@ -33,10 +33,14 @@ export const site = {
     { day: "Sabato", time: "09:00 – 13:00" },
     { day: "Domenica", time: "Chiuso" },
   ],
+  // Pagine social ufficiali (parametri di tracciamento QR/share rimossi).
   social: [
-    { label: "Instagram", href: "#" },
-    { label: "Facebook", href: "#" },
-    { label: "WhatsApp", href: "https://wa.me/393533699837" },
+    { label: "Instagram", href: "https://www.instagram.com/gardenscars" },
+    {
+      label: "Facebook",
+      href: "https://www.facebook.com/profile.php?id=61555662421566",
+    },
+    { label: "TikTok", href: "https://www.tiktok.com/@gardenscars" },
   ],
   // Coordinate approssimative di Giffoni Valle Piana per la mappa.
   // mapEmbed: anteprima Google Maps (iframe, nessuna API key richiesta).

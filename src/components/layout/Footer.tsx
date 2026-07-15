@@ -1,6 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { nav, site, isMenu } from "@/lib/site";
+import { InstagramIcon, FacebookIcon, TikTokIcon } from "@/components/ui/SocialIcons";
+
+// Associa ogni pagina social al relativo logo.
+const socialIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  Instagram: InstagramIcon,
+  Facebook: FacebookIcon,
+  TikTok: TikTokIcon,
+};
 
 export default function Footer() {
   return (
@@ -55,17 +63,25 @@ export default function Footer() {
               </a>
             </li>
           </ul>
-          <ul className="mt-6 flex gap-4">
-            {site.social.map((s) => (
-              <li key={s.label}>
-                <a
-                  href={s.href}
-                  className="font-display text-sm font-medium text-paper/70 transition-colors hover:text-racing-bright"
-                >
-                  {s.label}
-                </a>
-              </li>
-            ))}
+          <h3 className="eyebrow mt-8 text-paper/40">Seguici</h3>
+          <ul className="mt-4 flex gap-3">
+            {site.social.map((s) => {
+              const Icon = socialIcons[s.label];
+              const external = s.href.startsWith("http");
+              return (
+                <li key={s.label}>
+                  <a
+                    href={s.href}
+                    target={external ? "_blank" : undefined}
+                    rel={external ? "noopener noreferrer" : undefined}
+                    aria-label={`${site.name} su ${s.label}`}
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-white/12 text-paper/70 transition-colors hover:border-racing-bright hover:text-racing-bright focus:outline-none focus-visible:ring-2 focus-visible:ring-racing-bright"
+                  >
+                    {Icon ? <Icon className="h-5 w-5" /> : s.label}
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </div>
@@ -77,6 +93,23 @@ export default function Footer() {
             {site.vat ? ` · ${site.vat}` : ""}
           </p>
           <p>Tutti i diritti riservati.</p>
+          <a
+            href="https://www.quantor-ai.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-[20px] transition-opacity hover:opacity-80"
+            aria-label="Fatto da Quantor AI"
+          >
+            <span>Fatto da</span>
+            <Image
+              src="/brand/logo-quantor.png"
+              alt="Quantor AI"
+              width={695}
+              height={220}
+              sizes="98px"
+              className="h-[31px] w-auto"
+            />
+          </a>
         </div>
       </div>
     </footer>
