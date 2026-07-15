@@ -106,6 +106,17 @@ export default function Car360({
         style={{
           opacity: dimmed ? 0 : 1,
           transition: `opacity ${FADE_MS}ms ease`,
+          // Un <video> in riproduzione, durante lo scroll, si "strappa": Chrome
+          // ricompone il layer video a scatti contro lo scorrimento e lascia
+          // una banda orizzontale che scorre (visibile SOLO in scroll, non a
+          // pagina ferma). Promuoverlo a un layer di compositing dedicato e
+          // stabile (translateZ(0) + backface-visibility) fa sì che il
+          // compositor lo muova come un blocco unico, senza tearing. NB: è il
+          // contrario della CSS mask sul video (quella SPEGNE la GPU): qui la
+          // usiamo a favore.
+          transform: "translateZ(0)",
+          backfaceVisibility: "hidden",
+          willChange: "transform",
         }}
       >
         {near && (
