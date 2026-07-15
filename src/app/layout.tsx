@@ -67,7 +67,8 @@ export const metadata: Metadata = {
     description,
     images: ["/generated/hero.webp"],
   },
-  icons: { icon: "/brand/logo.jpg", apple: "/brand/logo.jpg" },
+  // Le icone (favicon.ico, icon.png, apple-icon.png) sono in src/app/: Next le
+  // rileva come file convention e genera i <link> con size e type corretti.
   alternates: { canonical: "https://www.gardencars.it" },
 };
 
@@ -82,6 +83,7 @@ const jsonLd = {
   name: site.name,
   description,
   image: "https://www.gardencars.it/generated/hero.webp",
+  logo: "https://www.gardencars.it/icon.png",
   "@id": "https://www.gardencars.it",
   url: "https://www.gardencars.it",
   telephone: site.phone,
